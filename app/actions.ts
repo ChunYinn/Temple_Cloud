@@ -17,7 +17,9 @@ export async function createTempleAction(
   _prevState: ActionState,
   formData: FormData
 ) {
-  const { userId } = auth();
+  const { userId } = await auth();
+
+  console.log('Debug - userId:', userId); // 除錯用
 
   if (!userId) {
     return { error: '請先登入以建立寺廟' };
@@ -84,7 +86,7 @@ export async function deleteTempleAction(
   _prevState: ActionState,
   formData: FormData
 ) {
-  const { userId } = auth();
+  const { userId } = await auth();
 
   if (!userId) {
     return { error: '請先登入以刪除寺廟' };

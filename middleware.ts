@@ -42,9 +42,14 @@ function extractSubdomain(request: NextRequest): string | null {
   return isSubdomain ? hostname.replace(`.${rootDomainFormatted}`, '') : null;
 }
 
-export default clerkMiddleware((auth, request) => {
+export default clerkMiddleware(async (auth, request) => {
   const { pathname } = request.nextUrl;
   const subdomain = extractSubdomain(request);
+
+  // 只在需要認證的路由上保護
+  if (pathname.startsWith('/admin')) {
+    await auth.protect();
+  }
 
   if (subdomain) {
     if (pathname.startsWith('/admin')) {
