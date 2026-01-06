@@ -43,24 +43,24 @@ const features = [
 
 export function LandingFeatures() {
   return (
-    <section className="py-24 px-4 bg-stone-50">
+    <section className="py-16 sm:py-20 md:py-24 px-4 bg-stone-50">
       <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           whileInView={{ y: 0, opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-16"
+          className="text-center mb-10 sm:mb-12 md:mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-stone-800 mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-stone-800 mb-2 sm:mb-3 md:mb-4">
             專為台灣宮廟設計
           </h2>
-          <p className="text-stone-600 text-lg">
+          <p className="text-stone-600 text-base sm:text-lg">
             讓傳統與科技完美結合
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
           {features.map((feature, i) => (
             <motion.div
               key={i}
@@ -68,17 +68,17 @@ export function LandingFeatures() {
               whileInView={{ y: 0, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1, duration: 0.5 }}
-              className="group bg-white rounded-2xl p-8 shadow-lg shadow-stone-200/50 hover:shadow-xl transition-all hover:-translate-y-1 border border-stone-100"
+              className="group bg-white rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-lg shadow-stone-200/50 hover:shadow-xl transition-all hover:-translate-y-1"
             >
               <div
-                className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center text-3xl mb-6 shadow-lg group-hover:scale-110 transition-transform`}
+                className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center text-2xl sm:text-3xl mb-4 sm:mb-6 shadow-lg group-hover:scale-110 transition-transform`}
               >
                 {feature.icon}
               </div>
-              <h3 className="text-xl font-bold text-stone-800 mb-2">
+              <h3 className="text-lg sm:text-xl font-bold text-stone-800 mb-1 sm:mb-2">
                 {feature.title}
               </h3>
-              <p className="text-stone-600">
+              <p className="text-sm sm:text-base text-stone-600">
                 {feature.desc}
               </p>
             </motion.div>

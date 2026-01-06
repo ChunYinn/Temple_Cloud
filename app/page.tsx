@@ -34,16 +34,12 @@ export default async function HomePage() {
 }
 
 function Footer() {
+  const currentYear = new Date().getFullYear();
+
   return (
-    <footer className="py-12 px-4 bg-stone-900">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">🏮</span>
-          <span className="text-amber-100 font-bold">廟務雲</span>
-        </div>
-        <div className="text-stone-500 text-sm">
-          © 2024 廟務雲
-        </div>
+    <footer className="py-3 bg-stone-50">
+      <div className="text-center text-stone-400 text-xs">
+        © {currentYear} 廟務雲
       </div>
     </footer>
   );
