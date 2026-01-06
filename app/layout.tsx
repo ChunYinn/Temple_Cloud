@@ -1,17 +1,18 @@
 import type { Metadata } from 'next';
-import { Geist } from 'next/font/google';
+import { Noto_Sans_TC } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { ClerkProvider } from '@clerk/nextjs';
 import './globals.css';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin']
+const notoSansTC = Noto_Sans_TC({
+  variable: '--font-noto-sans-tc',
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '700', '900']
 });
 
 export const metadata: Metadata = {
-  title: 'Temple Linktree',
-  description: 'Create and share temple pages with custom subdomains.'
+  title: '廟務雲 - 為您的寺廟打造專屬數位門戶',
+  description: '一個連結，連接信眾與寺廟。線上香油錢、活動報名、法會資訊，一鍵分享'
 };
 
 export default function RootLayout({
@@ -21,8 +22,8 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
-        <body className={`${geistSans.variable} antialiased`}>
+      <html lang="zh-TW">
+        <body className={`${notoSansTC.variable} antialiased font-sans bg-stone-50`}>
           {children}
           <SpeedInsights />
         </body>

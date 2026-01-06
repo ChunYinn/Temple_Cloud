@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Navigation } from '@/components/navigation';
 import { AdminDashboard } from './dashboard';
 import { rootDomain } from '@/lib/utils';
 import { auth } from '@clerk/nextjs/server';
@@ -6,8 +7,8 @@ import { redirect } from 'next/navigation';
 import { getUserTemples } from '@/lib/subdomains';
 
 export const metadata: Metadata = {
-  title: `Admin Dashboard | ${rootDomain}`,
-  description: `Manage subdomains for ${rootDomain}`
+  title: `管理後台 | 廟務雲`,
+  description: `管理您的寺廟頁面`
 };
 
 export default async function AdminPage() {
@@ -23,8 +24,11 @@ export default async function AdminPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <AdminDashboard tenants={tenants} />
+    <div className="min-h-screen bg-stone-50">
+      <Navigation />
+      <div className="pt-14">
+        <AdminDashboard tenants={tenants} />
+      </div>
     </div>
   );
 }
