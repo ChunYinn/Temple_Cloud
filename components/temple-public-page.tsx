@@ -1,8 +1,19 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { motion } from "framer-motion";
-import { BRAND_NAME, BRAND_URL } from "@/lib/branding";
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import {
+  BRAND,
+  TEMPLE_DEFAULTS,
+  NAV_ITEMS,
+  QUICK_ACTIONS,
+  SOCIAL_ICONS,
+  MOCK_EVENTS,
+  MOCK_SERVICES,
+  MOCK_GALLERY,
+  COLORS,
+  IMAGE_SIZES
+} from '@/lib/constants';
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -126,15 +137,14 @@ export function TemplePublicPage({ temple }: { temple: TempleData }) {
   const [activeSection, setActiveSection] = useState("home");
   const currentYear = new Date().getFullYear();
 
-  // Enhanced temple data with mock fields
+  // Enhanced temple data with default values from constants
   const templeData = {
     ...temple,
-    subtitle: "主祀玉皇大帝",
-    avatar: "🏛️",
-    coverImage:
-      "https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=1200&h=800&fit=crop",
+    subtitle: TEMPLE_DEFAULTS.subtitle,
+    avatar: TEMPLE_DEFAULTS.avatar,
+    coverImage: TEMPLE_DEFAULTS.coverImage,
     email: `contact@${temple.slug}.temple.tw`,
-    hours: "每日 06:00 - 21:00",
+    hours: TEMPLE_DEFAULTS.hours,
     social: {
       facebook: "#",
       line: "#",
@@ -145,124 +155,11 @@ export function TemplePublicPage({ temple }: { temple: TempleData }) {
       : "本宮秉持「慈悲濟世、普渡眾生」之精神，致力於弘揚傳統文化，服務地方信眾。廟內供奉玉皇大帝、觀世音菩薩、關聖帝君等諸神，建築莊嚴肅穆，雕樑畫棟，充分展現台灣傳統廟宇之美。",
   };
 
-  const events = [
-    {
-      id: 1,
-      title: "觀音誕辰祈福法會",
-      date: "2024/03/24",
-      time: "09:00",
-      location: "大雄寶殿",
-      desc: "恭祝觀世音菩薩聖誕，誦經祈福，消災延壽。",
-      image:
-        "https://images.unsplash.com/photo-1547981609-4b6bfe67ca0b?w=600&h=400&fit=crop",
-    },
-    {
-      id: 2,
-      title: "清明超薦法會",
-      date: "2024/04/04",
-      time: "08:00",
-      location: "大雄寶殿",
-      desc: "清明慎終追遠，超薦先人，功德迴向。",
-      image:
-        "https://images.unsplash.com/photo-1574236170878-f66e35f83207?w=600&h=400&fit=crop",
-    },
-    {
-      id: 3,
-      title: "媽祖聖誕遶境",
-      date: "2024/04/23",
-      time: "06:00",
-      location: "廟埕集合",
-      desc: "恭迎媽祖聖駕出巡，祈求國泰民安。",
-      image:
-        "https://images.unsplash.com/photo-1548013146-72479768bada?w=600&h=400&fit=crop",
-    },
-  ];
-
-  const services = [
-    {
-      id: 1,
-      icon: "🪔",
-      name: "光明燈",
-      price: "500",
-      unit: "年",
-      desc: "點燈祈福，光明吉祥，照亮前程",
-      popular: true,
-    },
-    {
-      id: 2,
-      icon: "🐲",
-      name: "太歲燈",
-      price: "800",
-      unit: "年",
-      desc: "安太歲，消災解厄，保佑平安",
-    },
-    {
-      id: 3,
-      icon: "📿",
-      name: "平安符",
-      price: "100",
-      unit: "個",
-      desc: "隨身攜帶，趨吉避凶",
-    },
-    {
-      id: 4,
-      icon: "🙏",
-      name: "祈福法會",
-      price: "1,000",
-      unit: "場",
-      desc: "消災解厄，祈求平安",
-    },
-    {
-      id: 5,
-      icon: "🕯️",
-      name: "藥師燈",
-      price: "600",
-      unit: "年",
-      desc: "消災延壽，身體健康",
-    },
-    {
-      id: 6,
-      icon: "💫",
-      name: "文昌燈",
-      price: "500",
-      unit: "年",
-      desc: "金榜題名，學業進步",
-    },
-  ];
-
-  const gallery = [
-    {
-      url: "https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=800&h=600&fit=crop",
-      caption: "廟宇正殿",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1547981609-4b6bfe67ca0b?w=800&h=600&fit=crop",
-      caption: "神明聖像",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1574236170878-f66e35f83207?w=800&h=600&fit=crop",
-      caption: "法會活動",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1548013146-72479768bada?w=800&h=600&fit=crop",
-      caption: "建築細節",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=800&h=600&fit=crop",
-      caption: "夜間燈火",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1528164344705-47542687000d?w=800&h=600&fit=crop",
-      caption: "慶典活動",
-    },
-  ];
-
-  const navItems = [
-    { id: "home", icon: "🏠", label: "首頁" },
-    { id: "services", icon: "🪔", label: "服務" },
-    { id: "events", icon: "📅", label: "活動" },
-    { id: "about", icon: "ℹ️", label: "關於" },
-  ];
+  // Use constants for mock data
+  const events = MOCK_EVENTS;
+  const services = MOCK_SERVICES;
+  const gallery = MOCK_GALLERY;
+  const navItems = NAV_ITEMS;
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -308,7 +205,7 @@ export function TemplePublicPage({ temple }: { temple: TempleData }) {
       </header>
 
       {/* Mobile Header - Hidden on Desktop */}
-      <header className="md:hidden sticky top-0 z-50 bg-gradient-to-r from-red-800 to-red-900 text-white shadow-lg">
+      <header className={`md:hidden sticky top-0 z-50 ${COLORS.header.mobile} text-white shadow-lg`}>
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center text-xl shadow-md">
@@ -418,7 +315,7 @@ export function TemplePublicPage({ temple }: { temple: TempleData }) {
 const MobileHome = ({ temple, events, services }: any) => (
   <div>
     {/* Hero Cover */}
-    <div className="relative h-48">
+    <div className={`relative ${IMAGE_SIZES.hero.mobile}`}>
       <img
         src={temple.coverImage}
         alt={temple.name}
@@ -432,20 +329,7 @@ const MobileHome = ({ temple, events, services }: any) => (
     <div className="px-4 -mt-6 relative z-10">
       <div className="bg-white rounded-2xl shadow-lg p-4">
         <div className="grid grid-cols-4 gap-2">
-          {[
-            {
-              icon: "💰",
-              label: "香油錢",
-              color: "from-amber-400 to-amber-500",
-            },
-            { icon: "🪔", label: "點燈", color: "from-red-400 to-red-500" },
-            { icon: "📅", label: "活動", color: "from-blue-400 to-blue-500" },
-            {
-              icon: "📍",
-              label: "導航",
-              color: "from-emerald-400 to-emerald-500",
-            },
-          ].map((action, i) => (
+          {QUICK_ACTIONS.map((action, i) => (
             <motion.button
               key={i}
               whileHover={{ scale: 1.1 }}
@@ -666,14 +550,14 @@ const MobileAbout = ({ temple, gallery }: any) => {
 
       <footer className="mt-8 text-center text-stone-400 text-sm">
         <p>
-          © {currentYear}, All Rights Reserved. Powered by{" "}
+          {BRAND.copyright(currentYear)} Powered by{" "}
           <a
             className="text-stone-500 hover:text-stone-700 underline-offset-2 hover:underline"
-            href={BRAND_URL}
+            href={BRAND.url}
             target="_blank"
             rel="noreferrer"
           >
-            {BRAND_NAME}
+            {BRAND.name}
           </a>
         </p>
       </footer>
@@ -1040,14 +924,14 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
             </div>
             <div className="text-stone-400 text-sm text-center">
               <p>
-                © {currentYear}, All Rights Reserved. Powered by{" "}
+                {BRAND.copyright(currentYear)} Powered by{" "}
                 <a
                   className="text-stone-300 hover:text-white underline-offset-2 hover:underline"
-                  href={BRAND_URL}
+                  href={BRAND.url}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {BRAND_NAME}
+                  {BRAND.name}
                 </a>
               </p>
             </div>
