@@ -55,16 +55,13 @@ export function LandingHero() {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.5 }}
-          className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4 sm:px-0"
+          className="flex justify-center items-center px-4 sm:px-0"
         >
           <SignInButton>
-            <button className="w-full sm:w-auto group relative px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl text-stone-900 font-bold text-base sm:text-lg shadow-xl shadow-amber-500/30 hover:shadow-amber-500/50 transition-all hover:scale-105">
+            <button className="px-8 sm:px-10 py-3 sm:py-4 bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl text-stone-900 font-bold text-base sm:text-lg shadow-xl shadow-amber-500/30 hover:shadow-amber-500/50 transition-all hover:scale-105">
               免費開始使用
             </button>
           </SignInButton>
-          <button className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 border-2 border-amber-400/50 rounded-xl text-amber-100 font-medium text-base sm:text-lg hover:bg-amber-400/10 transition-all">
-            了解更多
-          </button>
         </motion.div>
 
         {/* Statistics */}

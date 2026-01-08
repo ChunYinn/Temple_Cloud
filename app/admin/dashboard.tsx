@@ -59,36 +59,58 @@ export function AdminDashboard({ tenants }: { tenants: Temple[] }) {
 
   return (
     <div className="min-h-screen bg-stone-100">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
         {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-2xl lg:text-3xl font-bold text-stone-800">
+        <div className="mb-4 sm:mb-6 lg:mb-8">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-stone-800">
             歡迎回來 👋
           </h1>
-          <p className="text-stone-500 mt-1">管理您的寺廟頁面</p>
+          <p className="text-stone-500 text-sm sm:text-base mt-0.5 sm:mt-1">管理您的寺廟頁面</p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 mb-4 sm:mb-6 lg:mb-8">
           {[
-            { label: '寺廟數量', value: temples.length.toString(), icon: '🏛️', color: 'bg-gradient-to-br from-red-500 to-red-600' },
-            { label: '本月瀏覽', value: mockStats.monthlyViews.toLocaleString(), icon: '👁️', color: 'bg-gradient-to-br from-blue-500 to-blue-600' },
-            { label: '本月收款', value: `NT$ ${mockStats.monthlyRevenue.toLocaleString()}`, icon: '💰', color: 'bg-gradient-to-br from-emerald-500 to-emerald-600' },
-            { label: '待處理', value: mockStats.pending.toString(), icon: '📋', color: 'bg-gradient-to-br from-amber-500 to-amber-600' },
+            {
+              label: '寺廟數量',
+              value: temples.length.toString(),
+              icon: '🏛️',
+              color: 'bg-gradient-to-br from-red-500 to-red-600'
+            },
+            {
+              label: '本月瀏覽',
+              value: mockStats.monthlyViews.toLocaleString(),
+              icon: '👁️',
+              color: 'bg-gradient-to-br from-blue-500 to-blue-600'
+            },
+            {
+              label: '本月收款',
+              value: `NT$ ${mockStats.monthlyRevenue.toLocaleString()}`,
+              icon: '💰',
+              color: 'bg-gradient-to-br from-emerald-500 to-emerald-600'
+            },
+            {
+              label: '待處理',
+              value: mockStats.pending.toString(),
+              icon: '📋',
+              color: 'bg-gradient-to-br from-amber-500 to-amber-600'
+            },
           ].map((stat, i) => (
             <motion.div
               key={i}
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: i * 0.1 }}
-              className="bg-white rounded-2xl p-5 shadow-sm border border-stone-200"
+              className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 shadow-sm hover:shadow-md border border-stone-200 transition-all hover:-translate-y-0.5"
             >
-              <div className="flex items-start justify-between">
+              <div className="flex flex-row items-center justify-between gap-3">
                 <div>
-                  <p className="text-stone-500 text-sm mb-1">{stat.label}</p>
-                  <p className="text-xl lg:text-2xl font-bold text-stone-800">{stat.value}</p>
+                  <p className="text-stone-500 text-xs sm:text-sm font-medium mb-0.5 sm:mb-1">{stat.label}</p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-stone-800 break-all">
+                    {stat.value}
+                  </p>
                 </div>
-                <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center text-lg`}>
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${stat.color} flex items-center justify-center text-lg flex-shrink-0`}>
                   {stat.icon}
                 </div>
               </div>
@@ -101,29 +123,30 @@ export function AdminDashboard({ tenants }: { tenants: Temple[] }) {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden"
+          className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-stone-200 overflow-hidden"
         >
-          <div className="p-6 border-b border-stone-100 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-stone-800">我的寺廟</h2>
+          <div className="p-4 sm:p-5 lg:p-6 border-b border-stone-100 flex items-center justify-between">
+            <h2 className="text-base sm:text-lg font-bold text-stone-800">我的寺廟</h2>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 rounded-xl text-white text-sm font-medium shadow-lg shadow-red-500/20 hover:shadow-red-500/30 transition-all hover:scale-105"
+              className="inline-flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-red-600 to-red-700 rounded-lg sm:rounded-xl text-white text-xs sm:text-sm font-medium shadow-lg shadow-red-500/20 hover:shadow-red-500/30 transition-all hover:scale-105"
             >
-              <Plus className="h-4 w-4" />
-              <span>新增寺廟</span>
+              <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">新增寺廟</span>
+              <span className="sm:hidden">新增</span>
             </button>
           </div>
 
           {temples.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="w-20 h-20 rounded-full bg-stone-100 flex items-center justify-center mx-auto mb-4">
-                <span className="text-4xl">🏛️</span>
+            <div className="p-8 sm:p-12 text-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-stone-100 flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <span className="text-3xl sm:text-4xl">🏛️</span>
               </div>
-              <h3 className="text-lg font-medium text-stone-800 mb-2">還沒有寺廟</h3>
-              <p className="text-stone-500 mb-6">建立您的第一個寺廟頁面吧！</p>
+              <h3 className="text-base sm:text-lg font-medium text-stone-800 mb-1 sm:mb-2">還沒有寺廟</h3>
+              <p className="text-sm sm:text-base text-stone-500 mb-4 sm:mb-6">建立您的第一個寺廟頁面吧！</p>
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 rounded-xl text-white font-medium"
+                className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-red-600 to-red-700 rounded-lg sm:rounded-xl text-white text-sm sm:text-base font-medium"
               >
                 + 建立寺廟
               </button>
@@ -135,47 +158,50 @@ export function AdminDashboard({ tenants }: { tenants: Temple[] }) {
                   key={temple.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="p-6 hover:bg-stone-50 transition-colors group"
+                  className="p-4 sm:p-5 lg:p-6 hover:bg-stone-50 transition-colors group"
                 >
-                  <div className="flex items-center gap-4">
-                    {/* Temple Icon */}
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-3xl shadow-lg group-hover:scale-105 transition-transform">
-                      {temple.image}
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                    {/* Mobile Layout: Top Section */}
+                    <div className="flex items-start gap-3 sm:gap-4 w-full sm:w-auto">
+                      {/* Temple Icon */}
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-2xl sm:text-3xl shadow-lg group-hover:scale-105 transition-transform flex-shrink-0">
+                        {temple.image}
+                      </div>
+
+                      {/* Temple Info - Clickable */}
+                      <a
+                        href={`${protocol}://${temple.slug}.${rootDomain}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 min-w-0 group/link"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                          <div className="flex items-center gap-1.5 sm:gap-2">
+                            <h3 className="font-bold text-stone-800 text-base sm:text-lg group-hover/link:text-amber-600 transition-colors">{temple.name}</h3>
+                            <ExternalLink className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-stone-400 group-hover/link:text-amber-600 transition-colors" />
+                          </div>
+                          <span className="px-2 py-0.5 sm:px-2.5 rounded-full text-[10px] sm:text-xs font-medium bg-emerald-100 text-emerald-700 self-start sm:self-auto">
+                            已發布
+                          </span>
+                        </div>
+                        <p className="text-stone-500 text-xs sm:text-sm mt-0.5 group-hover/link:text-amber-600 transition-colors break-all">{temple.slug}.{rootDomain}</p>
+                      </a>
                     </div>
 
-                    {/* Temple Info - Clickable */}
-                    <a
-                      href={`${protocol}://${temple.slug}.${rootDomain}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 min-w-0 group/link"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-stone-800 text-lg group-hover/link:text-amber-600 transition-colors">{temple.name}</h3>
-                          <ExternalLink className="w-3.5 h-3.5 text-stone-400 group-hover/link:text-amber-600 transition-colors" />
-                        </div>
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
-                          已發布
-                        </span>
+                    {/* Stats - Show on mobile as row, desktop as before */}
+                    <div className="flex items-center gap-4 sm:gap-6 lg:gap-8 ml-0 sm:ml-auto pl-15 sm:pl-0">
+                      <div className="text-center sm:text-center">
+                        <p className="text-[10px] sm:text-xs text-stone-400">瀏覽</p>
+                        <p className="text-sm sm:text-base font-bold text-stone-700">{temple.views.toLocaleString()}</p>
                       </div>
-                      <p className="text-stone-500 text-sm mt-0.5 group-hover/link:text-amber-600 transition-colors">{temple.slug}.{rootDomain}</p>
-                    </a>
-
-                    {/* Stats */}
-                    <div className="hidden sm:flex items-center gap-8">
-                      <div className="text-center">
-                        <p className="text-xs text-stone-400">瀏覽</p>
-                        <p className="font-bold text-stone-700">{temple.views.toLocaleString()}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-xs text-stone-400">收款</p>
-                        <p className="font-bold text-emerald-600">NT$ {temple.donations.toLocaleString()}</p>
+                      <div className="text-center sm:text-center">
+                        <p className="text-[10px] sm:text-xs text-stone-400">收款</p>
+                        <p className="text-sm sm:text-base font-bold text-emerald-600">NT$ {temple.donations.toLocaleString()}</p>
                       </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2 ml-auto sm:ml-0">
                       <Link
                         href={`/admin/temple/${temple.id}`}
                         className="p-2 rounded-lg hover:bg-amber-100 text-stone-500 hover:text-amber-600 transition-colors"
