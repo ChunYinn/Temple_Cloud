@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useActionState } from 'react';
 import Link from 'next/link';
 import { Trash2, Loader2, Plus, ExternalLink } from 'lucide-react';
-import { deleteTempleAction } from '@/app/actions';
+import { deleteTempleAction, createTempleAction } from '@/app/actions';
 import { rootDomain, protocol } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import {
@@ -17,6 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 
 type Temple = {
   id: string;
@@ -45,6 +46,10 @@ export function AdminDashboard({ tenants }: { tenants: Temple[] }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [state, action, isPending] = useActionState<DeleteState, FormData>(
     deleteTempleAction,
+    {}
+  );
+  const [createState, createAction, isCreating] = useActionState<DeleteState, FormData>(
+    createTempleAction,
     {}
   );
 
@@ -245,41 +250,77 @@ export function AdminDashboard({ tenants }: { tenants: Temple[] }) {
               </DialogDescription>
             </DialogHeader>
 
-            <form className="space-y-4">
+            <form action={createAction} className="space-y-4">
               <div>
                 <Label htmlFor="temple-name">寺廟名稱</Label>
                 <Input
                   id="temple-name"
+                  name="name"
                   type="text"
                   placeholder="例：天壇宮"
                   className="mt-1"
+                  required
                 />
               </div>
 
               <div>
-                <Label htmlFor="subdomain">子網域</Label>
+                <Label htmlFor="subdomain">網址名稱</Label>
                 <div className="flex mt-1">
                   <Input
                     id="subdomain"
+                    name="slug"
                     type="text"
                     placeholder="tiantan"
                     className="rounded-r-none"
+                    pattern="[a-z0-9-]+"
+                    required
                   />
                   <span className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-stone-300 bg-stone-100 text-stone-500 text-sm">
                     .{rootDomain}
                   </span>
                 </div>
+                <p className="text-xs text-stone-500 mt-1">僅可使用小寫英文字母、數字和連字符</p>
               </div>
 
               <div>
-                <Label htmlFor="deity">主祀神明</Label>
-                <Input
-                  id="deity"
-                  type="text"
-                  placeholder="例：玉皇大帝"
+                <Label htmlFor="intro">寺廟簡介（選填）</Label>
+                <Textarea
+                  id="intro"
+                  name="intro"
+                  placeholder="簡短介紹您的寺廟，將顯示在公開頁面"
+                  rows={3}
                   className="mt-1"
                 />
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="address">地址（選填）</Label>
+                  <Input
+                    id="address"
+                    name="address"
+                    type="text"
+                    placeholder="台北市中正區..."
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="phone">電話（選填）</Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    placeholder="02-1234-5678"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              {createState.error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded text-sm">
+                  {createState.error}
+                </div>
+              )}
 
               <div className="flex gap-3 pt-4">
                 <Button
@@ -292,9 +333,17 @@ export function AdminDashboard({ tenants }: { tenants: Temple[] }) {
                 </Button>
                 <Button
                   type="submit"
+                  disabled={isCreating}
                   className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
                 >
-                  建立
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      建立中...
+                    </>
+                  ) : (
+                    '建立寺廟'
+                  )}
                 </Button>
               </div>
             </form>

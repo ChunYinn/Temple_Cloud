@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { Navigation } from '@/components/navigation';
 import { TempleManagement } from './temple-management';
-import { db } from '@/lib/db';
+import { prisma } from '@/lib/db';
 
 export default async function TemplePage({
   params,
@@ -17,7 +17,7 @@ export default async function TemplePage({
   }
 
   // Get temple data with authorization check
-  const temple = await db.temples.findFirst({
+  const temple = await prisma.temples.findFirst({
     where: {
       id,
       member: {
