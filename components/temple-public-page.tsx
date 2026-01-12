@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { Copy, Check } from "lucide-react";
 import {
   BRAND,
   TEMPLE_DEFAULTS,
@@ -89,35 +90,6 @@ const LineIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const GoogleMapsIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 48 48"
-    aria-hidden="true"
-    {...props}
-  >
-    <path
-      fill="#48b564"
-      d="M35.76,26.36h0.01c0,0-3.77,5.53-6.94,9.64c-2.74,3.55-3.54,6.59-3.77,8.06	C24.97,44.6,24.53,45,24,45s-0.97-0.4-1.06-0.94c-0.23-1.47-1.03-4.51-3.77-8.06c-0.42-0.55-0.85-1.12-1.28-1.7L28.24,22l8.33-9.88	C37.49,14.05,38,16.21,38,18.5C38,21.4,37.17,24.09,35.76,26.36z"
-    ></path>
-    <path
-      fill="#fcc60e"
-      d="M28.24,22L17.89,34.3c-2.82-3.78-5.66-7.94-5.66-7.94h0.01c-0.3-0.48-0.57-0.97-0.8-1.48L19.76,15	c-0.79,0.95-1.26,2.17-1.26,3.5c0,3.04,2.46,5.5,5.5,5.5C25.71,24,27.24,23.22,28.24,22z"
-    ></path>
-    <path
-      fill="#2c85eb"
-      d="M28.4,4.74l-8.57,10.18L13.27,9.2C15.83,6.02,19.69,4,24,4C25.54,4,27.02,4.26,28.4,4.74z"
-    ></path>
-    <path
-      fill="#ed5748"
-      d="M19.83,14.92L19.76,15l-8.32,9.88C10.52,22.95,10,20.79,10,18.5c0-3.54,1.23-6.79,3.27-9.3	L19.83,14.92z"
-    ></path>
-    <path
-      fill="#5695f6"
-      d="M28.24,22c0.79-0.95,1.26-2.17,1.26-3.5c0-3.04-2.46-5.5-5.5-5.5c-1.71,0-3.24,0.78-4.24,2L28.4,4.74	c3.59,1.22,6.53,3.91,8.17,7.38L28.24,22z"
-    ></path>
-  </svg>
-);
 
 // =============================================
 // Temple Public Page - Responsive Design
@@ -511,11 +483,28 @@ const MobileAbout = ({ temple, gallery }: any) => {
   const currentYear = new Date().getFullYear();
   return (
     <div className="pb-8">
-      <div className="bg-gradient-to-br from-red-700 to-red-900 p-6 text-white text-center">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center text-5xl mx-auto mb-4 shadow-xl">
-          {temple.avatar}
+      {/* Hero with Cover Image or Gradient Fallback */}
+      <div className="relative h-48 overflow-hidden">
+        {temple.coverImage ? (
+          <>
+            <img
+              src={temple.coverImage}
+              alt={temple.name}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
+          </>
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-red-700 to-red-900" />
+        )}
+        <div className="absolute inset-0 flex items-center justify-center text-white text-center p-6">
+          <div>
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center text-5xl mx-auto mb-4 shadow-xl">
+              {temple.avatar}
+            </div>
+            <h1 className="text-2xl font-bold">{temple.name}</h1>
+          </div>
         </div>
-        <h1 className="text-2xl font-bold">{temple.name}</h1>
       </div>
 
       <section className="px-4 py-6">
@@ -550,20 +539,20 @@ const MobileAbout = ({ temple, gallery }: any) => {
 
       <section className="px-4 mt-6">
         <h2 className="text-lg font-bold text-stone-800 mb-3">追蹤我們</h2>
-        <div className="flex gap-3">
+        <div className="flex justify-center gap-4">
           {[
-            { icon: FacebookIcon, label: "Facebook", color: "bg-blue-500" },
-            { icon: LineIcon, label: "LINE", color: "bg-green-500" },
-            { icon: InstagramIcon, label: "Instagram", color: "bg-pink-500" },
+            { icon: FacebookIcon, label: "Facebook", color: "bg-blue-600 hover:bg-blue-700" },
+            { icon: LineIcon, label: "LINE", color: "bg-green-500 hover:bg-green-600" },
+            { icon: InstagramIcon, label: "Instagram", color: "bg-gradient-to-br from-purple-600 via-pink-600 to-orange-600 hover:opacity-90" },
           ].map((social, i) => {
             const Icon = social.icon;
             return (
               <button
                 key={i}
-                className={`flex-1 ${social.color} text-white py-3 rounded-xl font-medium flex items-center justify-center gap-2`}
+                className={`w-12 h-12 ${social.color} text-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110`}
+                aria-label={social.label}
               >
-                <Icon className="h-5 w-5" />
-                <span>{social.label}</span>
+                <Icon className="h-6 w-6" />
               </button>
             );
           })}
@@ -593,6 +582,7 @@ const MobileAbout = ({ temple, gallery }: any) => {
 
 const DesktopHome = ({ temple, events, services, gallery }: any) => {
   const currentYear = new Date().getFullYear();
+
   return (
     <div>
       {/* Hero Section */}
@@ -843,51 +833,52 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
             </motion.div>
 
             {/* Contact Info */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100">
-              <h3 className="font-bold text-stone-800 mb-4">參拜資訊</h3>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
+            <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
+              <div className="px-6 py-4 bg-gradient-to-r from-stone-50 to-white border-b border-stone-100">
+                <h3 className="font-bold text-stone-800">參拜資訊</h3>
+              </div>
+              <div className="p-6 space-y-5">
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-lg">
                     📍
                   </div>
-                  <div>
-                    <p className="text-xs text-stone-400">地址</p>
-                    <p className="text-stone-700">{temple.address || "台灣"}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-stone-600 mb-1">地址</p>
+                    <p className="text-base text-stone-900 break-words">{temple.address || "台灣"}</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-lg">
                     ⏰
                   </div>
-                  <div>
-                    <p className="text-xs text-stone-400">開放時間</p>
-                    <p className="text-stone-700">{temple.hours}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-stone-600 mb-1">開放時間</p>
+                    <p className="text-base text-stone-900">{temple.hours || "每日 06:00 - 21:00"}</p>
                   </div>
                 </div>
                 {temple.phone && (
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-lg">
                       📞
                     </div>
-                    <div>
-                      <p className="text-xs text-stone-400">聯絡電話</p>
-                      <p className="text-stone-700">{temple.phone}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-stone-600 mb-1">聯絡電話</p>
+                      <p className="text-base text-stone-900">{temple.phone}</p>
                     </div>
                   </div>
                 )}
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                    📧
+                {temple.email && (
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-lg">
+                      📧
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-stone-600 mb-1">電子信箱</p>
+                      <p className="text-base text-stone-900 break-all">{temple.email}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-stone-400">電子信箱</p>
-                    <p className="text-stone-700">{temple.email}</p>
-                  </div>
-                </div>
+                )}
               </div>
-              <button className="w-full mt-4 py-2.5 border border-stone-300 text-stone-700 rounded-xl font-medium hover:bg-stone-50 transition-colors flex items-center justify-center gap-2">
-                <GoogleMapsIcon className="h-5 w-5" /> 在 Google Maps 開啟
-              </button>
             </div>
 
             {/* Social Links */}
@@ -1081,15 +1072,38 @@ const DesktopEvents = ({ events }: any) => (
   </div>
 );
 
-const DesktopAbout = ({ temple, gallery }: any) => (
-  <div>
-    {/* Hero */}
-    <div className="bg-gradient-to-br from-red-700 to-red-900 py-16 text-white text-center">
-      <div className="max-w-4xl mx-auto px-6">
-        <div className="w-28 h-28 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center text-6xl mx-auto mb-6 shadow-2xl">
-          {temple.avatar}
+const DesktopAbout = ({ temple, gallery }: any) => {
+  const [copiedAddress, setCopiedAddress] = useState(false);
+
+  const handleCopyAddress = (address: string) => {
+    navigator.clipboard.writeText(address);
+    setCopiedAddress(true);
+    setTimeout(() => setCopiedAddress(false), 2000);
+  };
+
+  return (
+    <div>
+    {/* Hero with Cover Image or Gradient Fallback */}
+    <div className="relative h-64 overflow-hidden">
+      {temple.coverImage ? (
+        <>
+          <img
+            src={temple.coverImage}
+            alt={temple.name}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
+        </>
+      ) : (
+        <div className="w-full h-full bg-gradient-to-br from-red-700 to-red-900" />
+      )}
+      <div className="absolute inset-0 flex items-center justify-center text-white text-center">
+        <div>
+          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center text-6xl mx-auto mb-6 shadow-2xl">
+            {temple.avatar}
+          </div>
+          <h1 className="text-4xl font-bold mb-2">{temple.name}</h1>
         </div>
-        <h1 className="text-4xl font-bold mb-2">{temple.name}</h1>
       </div>
     </div>
 
@@ -1133,56 +1147,94 @@ const DesktopAbout = ({ temple, gallery }: any) => (
 
         {/* Sidebar */}
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100">
-            <h3 className="font-bold text-stone-800 mb-4">聯絡資訊</h3>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
+          <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
+            <div className="px-6 py-4 bg-gradient-to-r from-stone-50 to-white border-b border-stone-100">
+              <h3 className="font-bold text-stone-800">聯絡資訊</h3>
+            </div>
+            <div className="p-6 space-y-5">
+              {/* Address with Copy */}
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-lg">
                   📍
                 </div>
-                <div>
-                  <p className="text-xs text-stone-400">地址</p>
-                  <p className="text-stone-700">{temple.address || "台灣"}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-stone-600 mb-1">地址</p>
+                  <div className="flex items-start gap-2">
+                    <p className="text-base text-stone-900 break-words flex-1">{temple.address || "台灣"}</p>
+                    {temple.address && (
+                      <button
+                        onClick={() => handleCopyAddress(temple.address!)}
+                        className="text-xs text-stone-500 hover:text-stone-700 flex items-center gap-1 transition-colors px-2 py-1 border border-stone-200 rounded-md hover:bg-stone-50"
+                      >
+                        {copiedAddress ? (
+                          <>
+                            <Check className="w-3 h-3" />
+                            已複製
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" />
+                            複製
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+
+              {/* Hours */}
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-lg">
                   ⏰
                 </div>
-                <div>
-                  <p className="text-xs text-stone-400">開放時間</p>
-                  <p className="text-stone-700">{temple.hours}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-stone-600 mb-1">開放時間</p>
+                  <p className="text-base text-stone-900">{temple.hours || "每日 06:00 - 21:00"}</p>
                 </div>
               </div>
+
+              {/* Phone */}
               {temple.phone && (
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-lg">
                     📞
                   </div>
-                  <div>
-                    <p className="text-xs text-stone-400">聯絡電話</p>
-                    <p className="text-stone-700">{temple.phone}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-stone-600 mb-1">聯絡電話</p>
+                    <p className="text-base text-stone-900">{temple.phone}</p>
                   </div>
                 </div>
               )}
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  📧
+
+              {/* Email */}
+              {temple.email && (
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-lg">
+                    📧
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-stone-600 mb-1">電子信箱</p>
+                    <p className="text-base text-stone-900 break-all">{temple.email}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-stone-400">電子信箱</p>
-                  <p className="text-stone-700">{temple.email}</p>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
-          {/* Map Placeholder */}
-          <div className="bg-stone-200 rounded-2xl h-64 flex items-center justify-center">
-            <span className="text-stone-400 flex items-center gap-2">
-              <GoogleMapsIcon className="h-5 w-5" /> Google Maps
-            </span>
-          </div>
+          {/* Google Maps */}
+          {temple.address && (
+            <div className="rounded-2xl overflow-hidden h-64 shadow-sm border border-stone-100">
+              <iframe
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${encodeURIComponent(temple.address)}&zoom=15`}
+                allowFullScreen
+                title="Temple Location"
+              />
+            </div>
+          )}
 
           {/* Social */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100">
@@ -1202,7 +1254,8 @@ const DesktopAbout = ({ temple, gallery }: any) => (
       </div>
     </div>
   </div>
-);
+  );
+};
 
 // =============================================
 // SHARED COMPONENTS
