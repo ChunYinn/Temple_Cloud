@@ -18,10 +18,21 @@ export async function generateMetadata({
     };
   }
 
-  return {
+  const metadata: Metadata = {
     title: `${temple.name} | 廟務雲`,
     description: temple.intro || `歡迎來到${temple.name}`,
   };
+
+  // Add favicon if available
+  if (temple.favicon_url) {
+    metadata.icons = {
+      icon: temple.favicon_url,
+      shortcut: temple.favicon_url,
+      apple: temple.favicon_url,
+    };
+  }
+
+  return metadata;
 }
 
 export default async function SubdomainPage({

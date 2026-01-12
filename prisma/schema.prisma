@@ -1,76 +1,9 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../lib/generated/prisma"
-}
-
-enum MemberRole {
-  admin
-  staff
-}
-
-enum MemberStatus {
-  active
-  invited
-  disabled
-}
-
-enum BlockType {
-  service
-  link
-  text
-}
-
-enum ServiceType {
-  donation
-  light
-  taisui
-}
-
-enum PricingType {
-  fixed
-  variable
-}
-
-enum OrderStatus {
-  pending_payment
-  paid
-  cancelled
-  refunded
-}
-
-enum OrderChannel {
-  web
-  qr
-  line
-  facebook
-}
-
-enum PaymentProvider {
-  ecpay
-  manual
-}
-
-enum PaymentStatus {
-  initiated
-  succeeded
-  failed
-  refunded
-}
-
-enum ReceiptType {
-  donation_receipt
-  service_receipt
-}
-
-enum ReceiptStatus {
-  issued
-  voided
 }
 
 datasource db {
@@ -78,168 +11,184 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// Temple tenant definition (slug used for public page routing).
-model temples {
-  id                      String        @id @default(uuid()) @db.Uuid
-  name                    String
-  slug                    String        @unique
-  cover_image_url         String?
-  intro                   String?
-  address                 String?
-  phone                   String?
-  timezone                String        @default("Asia/Taipei")
-  is_active               Boolean       @default(true)
-  /// Clerk/Supabase auth user id (non-UUID).
-  created_by_auth_user_id String
-  created_at              DateTime      @default(now()) @db.Timestamptz(6)
-  updated_at              DateTime      @updatedAt @db.Timestamptz(6)
+// =============================================
+// SIMPLIFIED ENUMS - Taiwan only, no i18n needed
+// =============================================
 
-  members   temple_members[]
-  invites   invites[]
-  page      temple_pages?
-  blocks    page_blocks[]
-  services  services[]
-  orders    orders[]
+enum MemberRole {
+  admin
+  staff
 }
 
-/// Temple membership with role + status per temple.
+enum ServiceUnit {
+  year
+  month
+  time
+  piece
+}
+
+enum OrderStatus {
+  pending
+  completed
+  cancelled
+}
+
+// =============================================
+// MAIN TABLES
+// =============================================
+
+/// Temple tenant definition
+model temples {
+  id                      String    @id @default(uuid()) @db.Uuid
+
+  // Basic Info
+  name                    String
+  slug                    String    @unique
+  intro                   String?   @db.Text
+  full_description        String?   @db.Text
+
+  // Contact & Location
+  address                 String?
+  phone                   String?
+  email                   String?
+  hours                   String?   @default("每日 06:00 - 21:00")
+
+  // Images & Media
+  cover_image_url         String?
+  avatar_emoji            String?   @default("🏛️")
+  logo_url                String?   // R2 storage URL for temple logo
+  favicon_url             String?   // R2 storage URL for favicon
+  gallery_photos          String[]  @default([]) // Array of R2 URLs for gallery (max 6)
+
+  // Social Links
+  facebook_url            String?   @db.Text
+  line_id                 String?
+  instagram_url           String?   @db.Text
+
+  // System
+  is_active               Boolean   @default(true)
+  created_by_auth_user_id String    // Clerk auth user id
+  created_at              DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at              DateTime  @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  members                 temple_members[]
+  services                services[]
+  events                  events[]
+  orders                  orders[]
+  gallery                 gallery_images[]
+  stats                   temple_stats[]
+}
+
+/// Temple membership
 model temple_members {
-  id           String        @id @default(uuid()) @db.Uuid
-  temple_id    String        @db.Uuid
-  /// Clerk/Supabase auth user id (non-UUID).
-  auth_user_id String
+  id           String      @id @default(uuid()) @db.Uuid
+  temple_id    String      @db.Uuid
+  auth_user_id String      // Clerk auth user id
   role         MemberRole
-  status       MemberStatus  @default(active)
-  joined_at    DateTime      @default(now()) @db.Timestamptz(6)
-  created_at   DateTime      @default(now()) @db.Timestamptz(6)
+  joined_at    DateTime    @default(now()) @db.Timestamptz(6)
+  created_at   DateTime    @default(now()) @db.Timestamptz(6)
 
   temple temples @relation(fields: [temple_id], references: [id], onDelete: Cascade)
 
   @@unique([temple_id, auth_user_id])
 }
 
-/// Invitation tokens for onboarding new members.
-model invites {
-  id                      String       @id @default(uuid()) @db.Uuid
-  temple_id               String       @db.Uuid
-  email                   String
-  role                    MemberRole   @default(staff)
-  token_hash              String
-  expires_at              DateTime     @db.Timestamptz(6)
-  accepted_at             DateTime?    @db.Timestamptz(6)
-  /// Clerk/Supabase auth user id (non-UUID).
-  created_by_auth_user_id String
-  created_at              DateTime     @default(now()) @db.Timestamptz(6)
-
-  temple temples @relation(fields: [temple_id], references: [id], onDelete: Cascade)
-}
-
-/// Public page settings per temple.
-model temple_pages {
-  id            String   @id @default(uuid()) @db.Uuid
-  temple_id     String   @unique @db.Uuid
-  theme         String   @default("calm")
-  primary_color String?
-  show_address  Boolean  @default(true)
-  show_phone    Boolean  @default(true)
-  created_at    DateTime @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime @updatedAt @db.Timestamptz(6)
-
-  temple temples      @relation(fields: [temple_id], references: [id], onDelete: Cascade)
-  blocks page_blocks[]
-}
-
-/// Linktree-style blocks for the public page.
-model page_blocks {
-  id           String       @id @default(uuid()) @db.Uuid
-  temple_id    String       @db.Uuid
-  page_id      String       @db.Uuid
-  type         BlockType
-  title        String
-  subtitle     String?
-  href         String?
-  service_type ServiceType?
-  sort_order   Int          @default(0)
-  is_active    Boolean      @default(true)
-  metadata     Json?        @db.JsonB
-  created_at   DateTime     @default(now()) @db.Timestamptz(6)
-
-  temple temples      @relation(fields: [temple_id], references: [id], onDelete: Cascade)
-  page   temple_pages @relation(fields: [page_id], references: [id], onDelete: Cascade)
-}
-
-/// Services offered by a temple (donation/light/taisui).
+/// Services offered by temple (光明燈, 太歲燈, etc)
 model services {
-  id                String       @id @default(uuid()) @db.Uuid
-  temple_id         String       @db.Uuid
-  type              ServiceType
-  name              String
-  description       String?
-  pricing_type      PricingType
-  price_cents       Int?
-  min_amount_cents  Int?
-  currency          String       @default("TWD")
-  is_active         Boolean      @default(true)
-  requires_birthday Boolean      @default(false)
-  requires_wish     Boolean      @default(false)
-  generates_roster  Boolean      @default(false)
-  created_at        DateTime     @default(now()) @db.Timestamptz(6)
-  updated_at        DateTime     @updatedAt @db.Timestamptz(6)
+  id          String      @id @default(uuid()) @db.Uuid
+  temple_id   String      @db.Uuid
+  icon        String      @default("🪔")  // emoji icon
+  name        String
+  description String?     @db.Text
+  price       Int         // Price in TWD
+  unit        ServiceUnit @default(year)
+  is_popular  Boolean     @default(false)
+  is_active   Boolean     @default(true)
+  sort_order  Int         @default(0)
+  created_at  DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime    @updatedAt @db.Timestamptz(6)
 
-  temple  temples  @relation(fields: [temple_id], references: [id], onDelete: Cascade)
-  orders  orders[]
+  temple      temples     @relation(fields: [temple_id], references: [id], onDelete: Cascade)
+  orders      orders[]
 }
 
-/// Orders created from public submissions.
+/// Events and activities (法會, 慶典, etc)
+model events {
+  id                    String    @id @default(uuid()) @db.Uuid
+  temple_id             String    @db.Uuid
+  title                 String
+  description           String?   @db.Text
+  image_url             String?
+  event_date            DateTime  @db.Date
+  event_time            String    // "09:00"
+  location              String
+  max_capacity          Int?
+  current_registrations Int       @default(0)
+  registration_deadline DateTime? @db.Timestamptz(6)
+  is_active             Boolean   @default(true)
+  created_at            DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime  @updatedAt @db.Timestamptz(6)
+
+  temple                temples   @relation(fields: [temple_id], references: [id], onDelete: Cascade)
+  orders                orders[]
+}
+
+/// Orders for services, donations, events
 model orders {
-  id                    String       @id @default(uuid()) @db.Uuid
-  temple_id             String       @db.Uuid
-  service_id            String?      @db.Uuid
-  service_type_snapshot ServiceType
-  amount_cents          Int
-  currency              String       @default("TWD")
-  status                OrderStatus
-  customer_name         String
-  customer_email        String?
-  customer_phone        String?
-  customer_birthday     DateTime?    @db.Date
-  wish                  String?
-  channel               OrderChannel @default(web)
-  created_at            DateTime     @default(now()) @db.Timestamptz(6)
-  updated_at            DateTime     @updatedAt @db.Timestamptz(6)
+  id              String       @id @default(uuid()) @db.Uuid
+  temple_id       String       @db.Uuid
+  order_number    String       @unique // ORD000001
+  order_type      String       @default("service") // service/donation/event
+  service_id      String?      @db.Uuid
+  event_id        String?      @db.Uuid
 
-  temple   temples   @relation(fields: [temple_id], references: [id], onDelete: Cascade)
-  service  services? @relation(fields: [service_id], references: [id], onDelete: SetNull)
-  payments payments[]
-  receipts receipts[]
+  // Customer info
+  customer_name   String
+  customer_email  String?
+  customer_phone  String?
+
+  // Payment info
+  amount          Int          // Amount in TWD
+  status          OrderStatus  @default(pending)
+  payment_method  String?
+  payment_status  String?      @default("pending")
+
+  notes           String?      @db.Text
+  created_at      DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime     @updatedAt @db.Timestamptz(6)
+  completed_at    DateTime?    @db.Timestamptz(6)
+
+  temple          temples      @relation(fields: [temple_id], references: [id], onDelete: Cascade)
+  service         services?    @relation(fields: [service_id], references: [id], onDelete: SetNull)
+  event           events?      @relation(fields: [event_id], references: [id], onDelete: SetNull)
 }
 
-/// Payment attempts tied to an order (webhook-safe).
-model payments {
-  id                  String         @id @default(uuid()) @db.Uuid
-  order_id            String         @db.Uuid
-  provider            PaymentProvider
-  provider_payment_id String?
-  status              PaymentStatus
-  amount_cents        Int
-  currency            String         @default("TWD")
-  idempotency_key     String         @unique
-  raw_payload         Json?          @db.JsonB
-  paid_at             DateTime?      @db.Timestamptz(6)
-  created_at          DateTime       @default(now()) @db.Timestamptz(6)
-  updated_at          DateTime       @updatedAt @db.Timestamptz(6)
+/// Gallery images for temple
+model gallery_images {
+  id          String    @id @default(uuid()) @db.Uuid
+  temple_id   String    @db.Uuid
+  image_url   String
+  caption     String?
+  sort_order  Int       @default(0)
+  is_featured Boolean   @default(false)
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
 
-  order orders @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  temple      temples   @relation(fields: [temple_id], references: [id], onDelete: Cascade)
 }
 
-/// Receipt/certificate records for orders.
-model receipts {
-  id        String        @id @default(uuid()) @db.Uuid
-  order_id  String        @db.Uuid
-  type      ReceiptType
-  file_url  String?
-  issued_at DateTime      @default(now()) @db.Timestamptz(6)
-  status    ReceiptStatus @default(issued)
+/// Daily statistics for analytics and export
+model temple_stats {
+  id               String    @id @default(uuid()) @db.Uuid
+  temple_id        String    @db.Uuid
+  date             DateTime  @db.Date
+  views            Int       @default(0)
+  unique_visitors  Int       @default(0)
+  donations_amount Int       @default(0)
+  orders_count     Int       @default(0)
+  created_at       DateTime  @default(now()) @db.Timestamptz(6)
 
-  order orders @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  temple           temples   @relation(fields: [temple_id], references: [id], onDelete: Cascade)
+
+  @@unique([temple_id, date])
 }

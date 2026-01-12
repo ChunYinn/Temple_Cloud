@@ -1,19 +1,18 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from "react";
+import { motion } from "framer-motion";
 import {
   BRAND,
   TEMPLE_DEFAULTS,
   NAV_ITEMS,
   QUICK_ACTIONS,
-  SOCIAL_ICONS,
   MOCK_EVENTS,
   MOCK_SERVICES,
   MOCK_GALLERY,
   COLORS,
-  IMAGE_SIZES
-} from '@/lib/constants';
+  IMAGE_SIZES,
+} from "@/lib/constants";
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -130,6 +129,15 @@ type TempleData = {
   intro?: string | null;
   address?: string | null;
   phone?: string | null;
+  hours?: string | null;
+  email?: string | null;
+  avatar_emoji?: string | null;
+  logo_url?: string | null;
+  favicon_url?: string | null;
+  cover_image_url?: string | null;
+  facebook_url?: string | null;
+  line_id?: string | null;
+  instagram_url?: string | null;
 };
 
 export function TemplePublicPage({ temple }: { temple: TempleData }) {
@@ -140,10 +148,9 @@ export function TemplePublicPage({ temple }: { temple: TempleData }) {
   // Enhanced temple data with default values from constants
   const templeData = {
     ...temple,
-    subtitle: TEMPLE_DEFAULTS.subtitle,
-    avatar: TEMPLE_DEFAULTS.avatar,
-    coverImage: TEMPLE_DEFAULTS.coverImage,
-    email: `contact@${temple.slug}.temple.tw`,
+    avatar: temple.avatar_emoji || TEMPLE_DEFAULTS.avatar,
+    coverImage: temple.cover_image_url || TEMPLE_DEFAULTS.coverImage,
+    email: temple.email || `contact@${temple.slug}.temple.tw`,
     hours: TEMPLE_DEFAULTS.hours,
     social: {
       facebook: "#",
@@ -169,12 +176,19 @@ export function TemplePublicPage({ temple }: { temple: TempleData }) {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center text-xl shadow-md">
-                {templeData.avatar}
-              </div>
+              {temple.logo_url ? (
+                <img
+                  src={temple.logo_url}
+                  alt={templeData.name}
+                  className="w-10 h-10 rounded-xl object-cover shadow-md"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center text-xl shadow-md">
+                  {templeData.avatar}
+                </div>
+              )}
               <div>
                 <h1 className="font-bold text-stone-800">{templeData.name}</h1>
-                <p className="text-xs text-stone-500">{templeData.subtitle}</p>
               </div>
             </div>
 
@@ -205,17 +219,26 @@ export function TemplePublicPage({ temple }: { temple: TempleData }) {
       </header>
 
       {/* Mobile Header - Hidden on Desktop */}
-      <header className={`md:hidden sticky top-0 z-50 ${COLORS.header.mobile} text-white shadow-lg`}>
+      <header
+        className={`md:hidden sticky top-0 z-50 ${COLORS.header.mobile} text-white shadow-lg`}
+      >
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center text-xl shadow-md">
-              {templeData.avatar}
-            </div>
+            {temple.logo_url ? (
+              <img
+                src={temple.logo_url}
+                alt={templeData.name}
+                className="w-10 h-10 rounded-full object-cover shadow-md"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center text-xl shadow-md">
+                {templeData.avatar}
+              </div>
+            )}
             <div>
               <h1 className="font-bold text-lg leading-tight">
                 {templeData.name}
               </h1>
-              <p className="text-amber-200/80 text-xs">{templeData.subtitle}</p>
             </div>
           </div>
           <button className="p-2 rounded-full hover:bg-white/10 transition-colors">
@@ -493,7 +516,6 @@ const MobileAbout = ({ temple, gallery }: any) => {
           {temple.avatar}
         </div>
         <h1 className="text-2xl font-bold">{temple.name}</h1>
-        <p className="text-amber-200/80 mt-1">{temple.subtitle}</p>
       </div>
 
       <section className="px-4 py-6">
@@ -595,9 +617,6 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
                     <h1 className="text-4xl lg:text-5xl font-bold">
                       {temple.name}
                     </h1>
-                    <p className="text-amber-200 text-lg mt-1">
-                      {temple.subtitle}
-                    </p>
                   </div>
                 </div>
                 <p className="text-white/80 max-w-2xl text-lg">
@@ -919,7 +938,6 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
               </div>
               <div>
                 <h3 className="font-bold text-lg">{temple.name}</h3>
-                <p className="text-stone-400 text-sm">{temple.subtitle}</p>
               </div>
             </div>
             <div className="text-stone-400 text-sm text-center">
@@ -1072,7 +1090,6 @@ const DesktopAbout = ({ temple, gallery }: any) => (
           {temple.avatar}
         </div>
         <h1 className="text-4xl font-bold mb-2">{temple.name}</h1>
-        <p className="text-amber-200 text-xl">{temple.subtitle}</p>
       </div>
     </div>
 

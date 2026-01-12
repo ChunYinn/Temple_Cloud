@@ -14,7 +14,7 @@ type ActionState = {
 };
 
 export async function createTempleAction(
-  _prevState: ActionState,
+  _prevState: ActionState | null,
   formData: FormData
 ) {
   const { userId } = await auth();
@@ -30,7 +30,11 @@ export async function createTempleAction(
   const intro = (formData.get('intro') as string)?.trim() || null;
   const address = (formData.get('address') as string)?.trim() || null;
   const phone = (formData.get('phone') as string)?.trim() || null;
-  const timezone = 'Asia/Taipei'; // Fixed for Taiwan
+  const email = (formData.get('email') as string)?.trim() || null;
+  const hours = (formData.get('hours') as string)?.trim() || '每日 06:00 - 21:00';
+  const avatar_emoji = (formData.get('avatar_emoji') as string)?.trim() || '🏛️';
+  const logo_url = (formData.get('logo_url') as string)?.trim() || null;
+  const favicon_url = (formData.get('favicon_url') as string)?.trim() || null;
 
   const slug = sanitizeSlug(rawSlug);
 
@@ -55,7 +59,11 @@ export async function createTempleAction(
         intro,
         address,
         phone,
-        timezone,
+        email,
+        hours,
+        avatar_emoji,
+        logo_url,
+        favicon_url,
         created_by_auth_user_id: userId
       }
     });
@@ -65,13 +73,6 @@ export async function createTempleAction(
         temple_id: createdTemple.id,
         auth_user_id: userId,
         role: 'admin'
-      }
-    });
-
-    await tx.temple_pages.create({
-      data: {
-        temple_id: createdTemple.id,
-        theme: 'calm'
       }
     });
 

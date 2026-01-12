@@ -49,9 +49,17 @@ export function TempleManagement({ temple }: { temple: any }) {
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-xl">
-                  {templeEmoji}
-                </div>
+                {temple.logo_url ? (
+                  <img
+                    src={temple.logo_url}
+                    alt={temple.name}
+                    className="w-10 h-10 rounded-xl object-cover"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-xl">
+                    {templeEmoji}
+                  </div>
+                )}
                 <div>
                   <h1 className="font-bold text-stone-800">{temple.name}</h1>
                   <p className="text-xs text-stone-500">{temple.slug}.{rootDomain}</p>
@@ -114,11 +122,18 @@ export function TempleManagement({ temple }: { temple: any }) {
                       <div className="h-full overflow-y-auto p-4">
                         {/* Temple Info */}
                         <div className="text-center mb-6 pt-6">
-                          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center mx-auto mb-3 shadow-lg">
-                            <span className="text-3xl">{templeEmoji}</span>
-                          </div>
+                          {temple.logo_url ? (
+                            <img
+                              src={temple.logo_url}
+                              alt={temple.name}
+                              className="w-20 h-20 rounded-full object-cover mx-auto mb-3 shadow-lg"
+                            />
+                          ) : (
+                            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center mx-auto mb-3 shadow-lg">
+                              <span className="text-3xl">{templeEmoji}</span>
+                            </div>
+                          )}
                           <h3 className="text-xl font-bold text-amber-50">{temple.name}</h3>
-                          <p className="text-amber-200/60 text-sm">主祀玉皇大帝</p>
                         </div>
 
                         {/* Blocks List */}

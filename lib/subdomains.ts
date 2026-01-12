@@ -2,16 +2,7 @@ import { prisma } from '@/lib/db';
 
 export async function getTempleBySlug(slug: string) {
   return prisma.temples.findUnique({
-    where: { slug },
-    include: {
-      page: {
-        include: {
-          blocks: {
-            orderBy: { sort_order: 'asc' }
-          }
-        }
-      }
-    }
+    where: { slug }
   });
 }
 

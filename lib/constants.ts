@@ -15,7 +15,6 @@ export const BRAND = {
 // Temple Default Values
 export const TEMPLE_DEFAULTS = {
   avatar: '🏛️',
-  subtitle: '主祀玉皇大帝',
   hours: '每日 06:00 - 21:00',
   timezone: 'Asia/Taipei',
   coverImage: 'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=1200&h=800&fit=crop',
