@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db';
 // Get all events for a temple
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -13,7 +13,7 @@ export async function GET(
       return NextResponse.json({ error: '請先登入' }, { status: 401 });
     }
 
-    const templeId = params.id;
+    const { id: templeId } = await params;
 
     // Check if user has permission
     const member = await prisma.temple_members.findFirst({
@@ -49,7 +49,7 @@ export async function GET(
 // Create a new event
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -57,7 +57,7 @@ export async function POST(
       return NextResponse.json({ error: '請先登入' }, { status: 401 });
     }
 
-    const templeId = params.id;
+    const { id: templeId } = await params;
     const data = await request.json();
 
     // Check if user has permission (admin/staff only)
@@ -105,7 +105,7 @@ export async function POST(
 // Update an event
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -113,7 +113,7 @@ export async function PATCH(
       return NextResponse.json({ error: '請先登入' }, { status: 401 });
     }
 
-    const templeId = params.id;
+    const { id: templeId } = await params;
     const { eventId, ...data } = await request.json();
 
     if (!eventId) {
@@ -169,7 +169,7 @@ export async function PATCH(
 // Delete an event
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -177,7 +177,7 @@ export async function DELETE(
       return NextResponse.json({ error: '請先登入' }, { status: 401 });
     }
 
-    const templeId = params.id;
+    const { id: templeId } = await params;
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get('eventId');
 

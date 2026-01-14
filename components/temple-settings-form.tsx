@@ -35,7 +35,25 @@ interface TempleSettingsFormProps {
 }
 
 export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) {
-  const [formData, setFormData] = useState<Partial<Temple>>(temple);
+  // Only extract the fields that can be edited
+  const [formData, setFormData] = useState<Partial<Temple>>({
+    name: temple.name,
+    slug: temple.slug,
+    intro: temple.intro,
+    full_description: temple.full_description,
+    address: temple.address,
+    phone: temple.phone,
+    email: temple.email,
+    hours: temple.hours,
+    cover_image_url: temple.cover_image_url,
+    avatar_emoji: temple.avatar_emoji,
+    logo_url: temple.logo_url,
+    favicon_url: temple.favicon_url,
+    gallery_photos: temple.gallery_photos,
+    facebook_url: temple.facebook_url,
+    line_id: temple.line_id,
+    instagram_url: temple.instagram_url,
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [activeSection, setActiveSection] = useState('basic');
   const [logoFile, setLogoFile] = useState<File | null>(null);

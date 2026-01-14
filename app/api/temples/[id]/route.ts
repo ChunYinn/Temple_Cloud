@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db';
 // Update temple settings
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -13,7 +13,7 @@ export async function PATCH(
       return NextResponse.json({ error: '請先登入' }, { status: 401 });
     }
 
-    const templeId = params.id;
+    const { id: templeId } = await params;
     const data = await request.json();
 
     // Check if user has permission to update this temple
@@ -29,8 +29,34 @@ export async function PATCH(
       return NextResponse.json({ error: '您沒有權限修改此寺廟' }, { status: 403 });
     }
 
-    // Remove fields that shouldn't be updated directly
-    const { id, created_at, created_by_auth_user_id, ...updateData } = data;
+    // Extract only the fields that can be updated
+    const allowedFields = [
+      'name',
+      'slug',
+      'intro',
+      'full_description',
+      'address',
+      'phone',
+      'email',
+      'hours',
+      'cover_image_url',
+      'avatar_emoji',
+      'logo_url',
+      'favicon_url',
+      'gallery_photos',
+      'facebook_url',
+      'line_id',
+      'instagram_url',
+      'is_active'
+    ];
+
+    // Create update data with only allowed fields
+    const updateData: any = {};
+    for (const field of allowedFields) {
+      if (field in data) {
+        updateData[field] = data[field];
+      }
+    }
 
     // Update temple
     const updatedTemple = await prisma.temples.update({
@@ -54,7 +80,7 @@ export async function PATCH(
 // Get temple details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -62,7 +88,7 @@ export async function GET(
       return NextResponse.json({ error: '請先登入' }, { status: 401 });
     }
 
-    const templeId = params.id;
+    const { id: templeId } = await params;
 
     // Check if user has permission to view this temple
     const member = await prisma.temple_members.findFirst({
