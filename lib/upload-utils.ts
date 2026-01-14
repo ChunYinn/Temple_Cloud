@@ -69,13 +69,32 @@ export async function processImage(
     .toBuffer();
 }
 
-// Generate favicon from image
+// Generate favicon from image with rounded corners
 export async function generateFavicon(buffer: Buffer): Promise<Buffer> {
-  return sharp(buffer)
-    .resize(UPLOAD_CONFIG.FAVICON.SIZE, UPLOAD_CONFIG.FAVICON.SIZE, {
+  const size = UPLOAD_CONFIG.FAVICON.SIZE;
+  const cornerRadius = Math.round(size * 0.2); // 20% of size for nice rounded corners
+
+  // Create a rounded rectangle mask
+  const roundedCorners = Buffer.from(
+    `<svg width="${size}" height="${size}">
+      <rect x="0" y="0" width="${size}" height="${size}" rx="${cornerRadius}" ry="${cornerRadius}" fill="white"/>
+    </svg>`
+  );
+
+  // First resize the image
+  const resized = await sharp(buffer)
+    .resize(size, size, {
       fit: 'cover',
       position: 'center'
     })
+    .toBuffer();
+
+  // Apply rounded corners using composite
+  return sharp(resized)
+    .composite([{
+      input: roundedCorners,
+      blend: 'dest-in'
+    }])
     .png()
     .toBuffer();
 }
@@ -121,7 +140,9 @@ export async function deleteFromR2(key: string): Promise<boolean> {
 // Upload temple logo (and automatically generate favicon from it)
 export async function uploadTempleLogo(
   templeId: string,
-  file: File
+  file: File,
+  oldLogoUrl?: string | null,
+  oldFaviconUrl?: string | null
 ): Promise<{
   success: boolean;
   logoUrl?: string;
@@ -131,6 +152,18 @@ export async function uploadTempleLogo(
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
     const extension = file.type.split('/')[1] || 'jpg';
+
+    // Delete old logo if it exists
+    if (oldLogoUrl) {
+      const oldLogoKey = oldLogoUrl.replace(`${R2_CONFIG.publicUrl}/`, '');
+      await deleteFromR2(oldLogoKey);
+    }
+
+    // Delete old favicon if it exists
+    if (oldFaviconUrl) {
+      const oldFaviconKey = oldFaviconUrl.replace(`${R2_CONFIG.publicUrl}/`, '');
+      await deleteFromR2(oldFaviconKey);
+    }
 
     // Process logo image
     const processedLogo = await processImage(buffer, {
@@ -235,7 +268,8 @@ export async function uploadGalleryPhoto(
 // Upload temple cover image
 export async function uploadTempleCover(
   templeId: string,
-  file: File
+  file: File,
+  oldCoverUrl?: string | null
 ): Promise<{
   success: boolean;
   coverUrl?: string;
@@ -244,6 +278,12 @@ export async function uploadTempleCover(
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
     const extension = file.type.split('/')[1] || 'jpg';
+
+    // Delete old cover if it exists
+    if (oldCoverUrl) {
+      const oldCoverKey = oldCoverUrl.replace(`${R2_CONFIG.publicUrl}/`, '');
+      await deleteFromR2(oldCoverKey);
+    }
 
     // Process cover image
     const processedCover = await processImage(buffer, {

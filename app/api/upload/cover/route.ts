@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const templeId = formData.get('templeId') as string;
+    const oldCoverUrl = formData.get('oldCoverUrl') as string | null;
 
     if (!file) {
       return NextResponse.json({ error: '請選擇圖片檔案' }, { status: 400 });
@@ -29,8 +30,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    // Upload cover image
-    const result = await uploadTempleCover(uploadId, file);
+    // Upload cover image (and delete old one if it exists)
+    const result = await uploadTempleCover(uploadId, file, oldCoverUrl);
 
     if (!result.success) {
       return NextResponse.json({ error: result.error || '上傳失敗' }, { status: 500 });

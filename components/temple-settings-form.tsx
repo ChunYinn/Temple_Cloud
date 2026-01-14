@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { FacebookIcon, InstagramIcon, LineIcon } from './social-icons';
 import { rootDomain, protocol } from '@/lib/utils';
 import { MultiImageUpload } from './multi-image-upload';
-import { ImageCropModal, ASPECT_RATIOS } from './image-crop-modal';
+import { ImageCropModalStandalone as ImageCropModal, ASPECT_RATIOS } from './image-crop-modal-standalone';
 
 interface Temple {
   id: string;
@@ -218,6 +218,13 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
         const uploadFormData = new FormData();
         uploadFormData.append('file', logoFile);
         uploadFormData.append('templeId', temple.id);
+        // Pass old URLs for deletion
+        if (temple.logo_url) {
+          uploadFormData.append('oldLogoUrl', temple.logo_url);
+        }
+        if (temple.favicon_url) {
+          uploadFormData.append('oldFaviconUrl', temple.favicon_url);
+        }
 
         const uploadRes = await fetch('/api/upload/logo', {
           method: 'POST',
@@ -244,6 +251,10 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
         const uploadFormData = new FormData();
         uploadFormData.append('file', coverFile);
         uploadFormData.append('templeId', temple.id);
+        // Pass old URL for deletion
+        if (temple.cover_image_url) {
+          uploadFormData.append('oldCoverUrl', temple.cover_image_url);
+        }
 
         const uploadRes = await fetch('/api/upload/cover', {
           method: 'POST',
@@ -338,7 +349,7 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
                       value={formData.slug || ''}
                       onChange={(e) => handleInputChange('slug', e.target.value.toLowerCase())}
                       className="flex-1 px-4 py-3 rounded-l-xl border border-stone-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 outline-none transition-all"
-                      pattern="[a-z0-9-]+"
+                      pattern="[a-z0-9\-]+"
                       required
                     />
                     <span className="inline-flex items-center px-3 rounded-r-xl border border-l-0 border-stone-300 bg-stone-100 text-stone-600 text-sm whitespace-nowrap">
@@ -371,6 +382,7 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
                           src={logoPreview}
                           alt="寺廟標誌預覽"
                           fill
+                          sizes="128px"
                           className="object-cover rounded-xl"
                         />
                       </div>
@@ -418,6 +430,7 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
                           src={coverPreview}
                           alt="封面圖片預覽"
                           fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           className="object-cover rounded-xl"
                         />
                       </div>

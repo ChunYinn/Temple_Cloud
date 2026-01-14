@@ -19,7 +19,7 @@ export async function generateMetadata({
   }
 
   const metadata: Metadata = {
-    title: `${temple.name} | 廟務雲`,
+    title: temple.name,
     description: temple.intro || `歡迎來到${temple.name}`,
   };
 

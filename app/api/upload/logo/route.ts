@@ -13,6 +13,8 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const templeId = formData.get('templeId') as string;
+    const oldLogoUrl = formData.get('oldLogoUrl') as string | null;
+    const oldFaviconUrl = formData.get('oldFaviconUrl') as string | null;
 
     if (!file) {
       return NextResponse.json({ error: '請選擇圖片檔案' }, { status: 400 });
@@ -29,8 +31,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    // Upload logo
-    const result = await uploadTempleLogo(uploadId, file);
+    // Upload logo (and delete old ones if they exist)
+    const result = await uploadTempleLogo(uploadId, file, oldLogoUrl, oldFaviconUrl);
 
     if (!result.success) {
       return NextResponse.json({ error: result.error || '上傳失敗' }, { status: 500 });

@@ -404,7 +404,7 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
                       type="text"
                       placeholder="tiantan"
                       className="rounded-r-none"
-                      pattern="[a-z0-9-]+"
+                      pattern="[a-z0-9\-]+"
                       value={formValues.slug}
                       onChange={(e) => handleInputChange('slug', e.target.value.toLowerCase())}
                       required
