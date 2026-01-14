@@ -1,24 +1,10 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import sharp from 'sharp';
 
-// Image configuration
-export const UPLOAD_CONFIG = {
-  MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
-  ALLOWED_FORMATS: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'] as readonly string[],
-  QUALITY: 85,
-  LOGO: {
-    MAX_WIDTH: 500,
-    MAX_HEIGHT: 500,
-  },
-  FAVICON: {
-    SIZE: 32,
-  },
-  GALLERY: {
-    MAX_WIDTH: 1200,
-    MAX_HEIGHT: 800,
-    MAX_COUNT: 6,
-  }
-};
+import { UPLOAD_CONFIG } from './upload-validation';
+
+// Re-export for server-side use
+export { UPLOAD_CONFIG };
 
 // R2 configuration
 const R2_CONFIG = {
@@ -61,22 +47,6 @@ export function getPublicUrl(key: string): string {
   return `https://pub-${R2_CONFIG.accountId}.r2.dev/${key}`;
 }
 
-// Validate image file
-export function validateImage(file: File): { isValid: boolean; error?: string } {
-  if (!file) {
-    return { isValid: false, error: '請選擇檔案' };
-  }
-
-  if (!UPLOAD_CONFIG.ALLOWED_FORMATS.includes(file.type)) {
-    return { isValid: false, error: '檔案格式不支援，請上傳 JPG、PNG 或 WebP' };
-  }
-
-  if (file.size > UPLOAD_CONFIG.MAX_FILE_SIZE) {
-    return { isValid: false, error: `檔案大小不可超過 ${UPLOAD_CONFIG.MAX_FILE_SIZE / (1024 * 1024)} MB` };
-  }
-
-  return { isValid: true };
-}
 
 // Process and resize image
 export async function processImage(

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { uploadGalleryPhoto, validateImage, UPLOAD_CONFIG } from '@/lib/upload-utils';
+import { uploadGalleryPhoto } from '@/lib/upload-utils';
+import { validateImage, UPLOAD_CONFIG } from '@/lib/upload-validation';
 import { prisma } from '@/lib/db';
 
 export async function POST(request: NextRequest) {

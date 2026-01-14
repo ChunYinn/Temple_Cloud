@@ -119,8 +119,29 @@ export function TempleManagement({ temple }: { temple: any }) {
           <TempleSettingsForm
             temple={temple}
             onSave={async (data) => {
-              console.log('Saving temple settings:', data);
-              // TODO: Implement API call to save settings
+              try {
+                const response = await fetch(`/api/temples/${temple.id}`, {
+                  method: 'PATCH',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                  // You might want to show a success message here
+                  console.log('Temple settings saved successfully');
+                  // Could refresh the page or update the temple data
+                  window.location.reload();
+                } else {
+                  throw new Error(result.error || 'Failed to save settings');
+                }
+              } catch (error) {
+                console.error('Error saving temple settings:', error);
+                alert('儲存失敗，請稍後再試');
+              }
             }}
           />
         )}

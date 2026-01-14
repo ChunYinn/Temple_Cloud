@@ -7,6 +7,7 @@ import { Upload, X } from 'lucide-react';
 import Image from 'next/image';
 import { FacebookIcon, InstagramIcon, LineIcon } from './social-icons';
 import { rootDomain, protocol } from '@/lib/utils';
+import { MultiImageUpload } from './multi-image-upload';
 
 interface Temple {
   id: string;
@@ -360,10 +361,10 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
                 <span className="mr-2 text-xl">🖼️</span>
                 圖片媒體
               </h3>
-              <p className="text-sm text-stone-500 mt-1">設定寺廟的封面圖片</p>
+              <p className="text-sm text-stone-500 mt-1">設定寺廟的封面圖片與相簿</p>
             </div>
 
-            <div className="p-6 space-y-5">
+            <div className="p-6 space-y-6">
               {/* Cover Image */}
               <div>
                 <label className="block text-sm font-medium text-stone-700 mb-2">
@@ -388,6 +389,22 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
                     />
                   </div>
                 )}
+              </div>
+
+              {/* Gallery Photos */}
+              <div>
+                <label className="block text-sm font-medium text-stone-700 mb-2">
+                  寺廟相簿
+                </label>
+                <p className="text-xs text-stone-500 mb-4">
+                  上傳寺廟的環境、活動照片，最多 6 張
+                </p>
+                <MultiImageUpload
+                  templeId={temple.id}
+                  existingImages={formData.gallery_photos || []}
+                  onImagesUpdate={(images) => handleInputChange('gallery_photos', images as any)}
+                  maxImages={6}
+                />
               </div>
             </div>
           </motion.div>
