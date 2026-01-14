@@ -650,9 +650,17 @@ const MobileAbout = ({ temple, gallery }: any) => {
         )}
         <div className="absolute inset-0 flex items-center justify-center text-white text-center p-6">
           <div>
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center text-5xl mx-auto mb-4 shadow-xl">
-              {temple.avatar}
-            </div>
+            {temple.logo_url ? (
+              <img
+                src={temple.logo_url}
+                alt={temple.name}
+                className="w-24 h-24 rounded-full object-cover mx-auto mb-4 shadow-xl border-4 border-white/20"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center text-5xl mx-auto mb-4 shadow-xl">
+                {temple.avatar}
+              </div>
+            )}
             <h1 className="text-2xl font-bold">{temple.name}</h1>
           </div>
         </div>
@@ -768,9 +776,17 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
             <div className="flex items-end justify-between">
               <div className="text-white">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center text-4xl shadow-xl">
-                    {temple.avatar}
-                  </div>
+                  {temple.logo_url ? (
+                    <img
+                      src={temple.logo_url}
+                      alt={temple.name}
+                      className="w-20 h-20 rounded-2xl object-cover shadow-xl"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center text-4xl shadow-xl">
+                      {temple.avatar}
+                    </div>
+                  )}
                   <div>
                     <h1 className="text-4xl lg:text-5xl font-bold">
                       {temple.name}
@@ -1133,9 +1149,17 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center text-2xl">
-                {temple.avatar}
-              </div>
+              {temple.logo_url ? (
+                <img
+                  src={temple.logo_url}
+                  alt={temple.name}
+                  className="w-12 h-12 rounded-xl object-cover"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center text-2xl">
+                  {temple.avatar}
+                </div>
+              )}
               <div>
                 <h3 className="font-bold text-lg">{temple.name}</h3>
               </div>
@@ -1308,9 +1332,17 @@ const DesktopAbout = ({ temple, gallery }: any) => {
       )}
       <div className="absolute inset-0 flex items-center justify-center text-white text-center">
         <div>
-          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center text-6xl mx-auto mb-6 shadow-2xl">
-            {temple.avatar}
-          </div>
+          {temple.logo_url ? (
+            <img
+              src={temple.logo_url}
+              alt={temple.name}
+              className="w-28 h-28 rounded-full object-cover mx-auto mb-6 shadow-2xl border-4 border-white/20"
+            />
+          ) : (
+            <div className="w-28 h-28 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center text-6xl mx-auto mb-6 shadow-2xl">
+              {temple.avatar}
+            </div>
+          )}
           <h1 className="text-4xl font-bold mb-2">{temple.name}</h1>
         </div>
       </div>
