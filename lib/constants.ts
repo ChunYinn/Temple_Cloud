@@ -211,8 +211,26 @@ export const IMAGE_SIZES = {
   }
 } as const;
 
-// API Endpoints (if needed in future)
+// API Endpoints
 export const API_ENDPOINTS = {
+  // Upload endpoints
+  UPLOAD: {
+    LOGO: '/api/upload/logo',
+    FAVICON: '/api/upload/favicon',
+    COVER: '/api/upload/cover',
+    GALLERY: '/api/upload/gallery',
+  },
+  // Temple endpoints
+  TEMPLES: {
+    BASE: '/api/temples',
+    BY_ID: (id: string) => `/api/temples/${id}`,
+    EVENTS: (id: string) => `/api/temples/${id}/events`,
+    SERVICES: (id: string) => `/api/temples/${id}/services`,
+    ORDERS: (id: string) => `/api/temples/${id}/orders`,
+    ORDER_BY_ID: (id: string, orderId: string) => `/api/temples/${id}/orders/${orderId}`,
+    STATS: (id: string) => `/api/temples/${id}/stats`,
+  },
+  // Legacy endpoints (for backward compatibility)
   donation: '/api/donation',
   events: '/api/events',
   services: '/api/services'

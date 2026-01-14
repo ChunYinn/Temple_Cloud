@@ -12,17 +12,30 @@ const R2_CONFIG = {
   accessKeyId: process.env.R2_ACCESS_KEY_ID!,
   secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
   bucketName: process.env.R2_BUCKET_NAME || 'temple-assets',
+  publicUrl: process.env.R2_PUBLIC_BUCKET_URL,
 };
 
-// Initialize S3 client (R2 compatible)
-const s3Client = new S3Client({
-  region: 'auto',
-  endpoint: `https://${R2_CONFIG.accountId}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: R2_CONFIG.accessKeyId,
-    secretAccessKey: R2_CONFIG.secretAccessKey,
-  },
-});
+// Initialize S3 client (R2 compatible) - singleton pattern
+let s3Client: S3Client | null = null;
+
+function getR2Client(): S3Client {
+  if (!s3Client) {
+    // Validate required env vars
+    if (!R2_CONFIG.accountId || !R2_CONFIG.accessKeyId || !R2_CONFIG.secretAccessKey) {
+      throw new Error('R2 configuration missing. Please check your environment variables.');
+    }
+
+    s3Client = new S3Client({
+      region: 'auto',
+      endpoint: `https://${R2_CONFIG.accountId}.r2.cloudflarestorage.com`,
+      credentials: {
+        accessKeyId: R2_CONFIG.accessKeyId,
+        secretAccessKey: R2_CONFIG.secretAccessKey,
+      },
+    });
+  }
+  return s3Client;
+}
 
 // Generate unique key for assets
 export function generateAssetKey(type: 'logo' | 'favicon' | 'gallery' | 'cover', templeId: string, extension: string): string {
@@ -38,9 +51,8 @@ export function generateAssetKey(type: 'logo' | 'favicon' | 'gallery' | 'cover',
 
 // Get public URL for an asset
 export function getPublicUrl(key: string): string {
-  const publicBucketUrl = process.env.R2_PUBLIC_BUCKET_URL;
-  if (publicBucketUrl) {
-    return `${publicBucketUrl}/${key}`;
+  if (R2_CONFIG.publicUrl) {
+    return `${R2_CONFIG.publicUrl}/${key}`;
   }
 
   console.warn('R2_PUBLIC_BUCKET_URL not configured. Please add it to .env');
@@ -106,14 +118,21 @@ export async function uploadToR2(
   contentType: string
 ): Promise<boolean> {
   try {
+    const client = getR2Client();
     const command = new PutObjectCommand({
       Bucket: R2_CONFIG.bucketName,
       Key: key,
       Body: buffer,
       ContentType: contentType,
+      // Add cache control for better performance
+      CacheControl: 'public, max-age=31536000, immutable',
+      // Add metadata
+      Metadata: {
+        uploadedAt: new Date().toISOString(),
+      },
     });
 
-    await s3Client.send(command);
+    await client.send(command);
     return true;
   } catch (error) {
     console.error('R2 upload error:', error);
@@ -124,12 +143,13 @@ export async function uploadToR2(
 // Delete from R2
 export async function deleteFromR2(key: string): Promise<boolean> {
   try {
+    const client = getR2Client();
     const command = new DeleteObjectCommand({
       Bucket: R2_CONFIG.bucketName,
       Key: key,
     });
 
-    await s3Client.send(command);
+    await client.send(command);
     return true;
   } catch (error) {
     console.error('R2 delete error:', error);
@@ -154,13 +174,13 @@ export async function uploadTempleLogo(
     const extension = file.type.split('/')[1] || 'jpg';
 
     // Delete old logo if it exists
-    if (oldLogoUrl) {
+    if (oldLogoUrl && R2_CONFIG.publicUrl) {
       const oldLogoKey = oldLogoUrl.replace(`${R2_CONFIG.publicUrl}/`, '');
       await deleteFromR2(oldLogoKey);
     }
 
     // Delete old favicon if it exists
-    if (oldFaviconUrl) {
+    if (oldFaviconUrl && R2_CONFIG.publicUrl) {
       const oldFaviconKey = oldFaviconUrl.replace(`${R2_CONFIG.publicUrl}/`, '');
       await deleteFromR2(oldFaviconKey);
     }
@@ -280,7 +300,7 @@ export async function uploadTempleCover(
     const extension = file.type.split('/')[1] || 'jpg';
 
     // Delete old cover if it exists
-    if (oldCoverUrl) {
+    if (oldCoverUrl && R2_CONFIG.publicUrl) {
       const oldCoverKey = oldCoverUrl.replace(`${R2_CONFIG.publicUrl}/`, '');
       await deleteFromR2(oldCoverKey);
     }

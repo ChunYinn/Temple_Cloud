@@ -93,8 +93,12 @@ export async function GET(
       _sum: { amount: true },
     });
 
+    // Use Prisma's enum type for the status field
     const pendingCount = await prisma.orders.count({
-      where: { temple_id: templeId, status: 'pending' },
+      where: {
+        temple_id: templeId,
+        status: 'pending' as const  // Ensure TypeScript treats this as a literal type
+      },
     });
 
     const avgOrderValue = stats._count._all > 0
@@ -177,8 +181,8 @@ export async function POST(
         customer_email,
         customer_phone,
         amount,
-        status: 'pending',
-        payment_status: 'pending',
+        status: 'pending' as const,
+        payment_status: 'pending' as const,
         notes,
       },
       include: {

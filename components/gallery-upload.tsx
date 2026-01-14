@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { Upload, X, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { UPLOAD_CONFIG } from '@/lib/upload-utils';
+import { useImageValidation } from '@/lib/hooks/useImageValidation';
+import { ERROR_MESSAGES } from '@/lib/error-messages';
+import { API_ENDPOINTS } from '@/lib/constants';
 
 interface GalleryUploadProps {
   templeId: string;
@@ -15,6 +18,7 @@ export function GalleryUpload({ templeId, initialPhotos = [], onUpdate }: Galler
   const [photos, setPhotos] = useState<string[]>(initialPhotos);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { validateFile } = useImageValidation();
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -22,15 +26,10 @@ export function GalleryUpload({ templeId, initialPhotos = [], onUpdate }: Galler
 
     setError(null);
 
-    // Validate file type
-    if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
-      setError('請選擇有效的圖片格式 (JPG, PNG, WebP)');
-      return;
-    }
-
-    // Validate file size
-    if (file.size > UPLOAD_CONFIG.MAX_FILE_SIZE) {
-      setError(`圖片大小不可超過 ${UPLOAD_CONFIG.MAX_FILE_SIZE / (1024 * 1024)} MB`);
+    // Validate file
+    const validation = validateFile(file);
+    if (!validation.valid) {
+      setError(validation.error!);
       return;
     }
 
@@ -47,7 +46,7 @@ export function GalleryUpload({ templeId, initialPhotos = [], onUpdate }: Galler
       formData.append('file', file);
       formData.append('templeId', templeId);
 
-      const response = await fetch('/api/upload/gallery', {
+      const response = await fetch(API_ENDPOINTS.UPLOAD.GALLERY, {
         method: 'POST',
         body: formData,
       });
@@ -59,10 +58,10 @@ export function GalleryUpload({ templeId, initialPhotos = [], onUpdate }: Galler
         setPhotos(newPhotos);
         onUpdate?.(newPhotos);
       } else {
-        setError(result.error || '上傳失敗');
+        setError(result.error || ERROR_MESSAGES.UPLOAD.UPLOAD_FAILED);
       }
     } catch (err) {
-      setError('上傳時發生錯誤');
+      setError(ERROR_MESSAGES.SERVER.GENERIC);
     } finally {
       setUploading(false);
       // Reset input
