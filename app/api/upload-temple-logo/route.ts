@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { uploadTempleLogo, uploadTempleFavicon, validateImage } from '@/lib/upload-utils';
+import { uploadTempleLogo, uploadTempleFavicon } from '@/lib/upload-utils';
+import { validateImage } from '@/lib/upload-validation';
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,19 +42,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Upload logo and generate favicon
-    const result = await uploadTempleLogo(uploadId, file);
+    const logoResult = await uploadTempleLogo(uploadId, file);
 
-    if (!result.success) {
+    if (!logoResult.success) {
       return NextResponse.json(
-        { error: result.error || '上傳失敗' },
+        { error: logoResult.error || '上傳失敗' },
         { status: 500 }
       );
     }
 
+    // Also generate favicon
+    const faviconResult = await uploadTempleFavicon(uploadId, file);
+
     return NextResponse.json({
       success: true,
-      logoUrl: result.logoUrl,
-      faviconUrl: result.faviconUrl,
+      logoUrl: logoResult.logoUrl,
+      faviconUrl: faviconResult.success ? faviconResult.faviconUrl : undefined,
     });
   } catch (error) {
     console.error('Upload API error:', error);

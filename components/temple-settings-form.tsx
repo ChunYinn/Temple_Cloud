@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { TimeRangePicker } from './time-range-picker';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Crop } from 'lucide-react';
 import Image from 'next/image';
 import { FacebookIcon, InstagramIcon, LineIcon } from './social-icons';
 import { rootDomain, protocol } from '@/lib/utils';
 import { MultiImageUpload } from './multi-image-upload';
+import { ImageCropModal, ASPECT_RATIOS } from './image-crop-modal';
 
 interface Temple {
   id: string;
@@ -58,13 +59,22 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
   const [activeSection, setActiveSection] = useState('basic');
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(temple.logo_url || null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(temple.cover_image_url || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
+  // Cropping modal states
+  const [showLogoCrop, setShowLogoCrop] = useState(false);
+  const [showCoverCrop, setShowCoverCrop] = useState(false);
+  const [tempLogoUrl, setTempLogoUrl] = useState<string | null>(null);
+  const [tempCoverUrl, setTempCoverUrl] = useState<string | null>(null);
 
   const handleInputChange = (field: keyof Temple, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value || null }));
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file type
@@ -79,16 +89,12 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
         return;
       }
 
-      setLogoFile(file);
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLogoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      // Create temporary URL for cropping
+      const url = URL.createObjectURL(file);
+      setTempLogoUrl(url);
+      setShowLogoCrop(true);
     }
-  };
+  }, []);
 
   const removeLogo = () => {
     setLogoFile(null);
@@ -98,6 +104,106 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
       fileInputRef.current.value = '';
     }
   };
+
+  const handleCoverSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+        alert('請選擇有效的圖片格式 (JPG, PNG, WebP)');
+        return;
+      }
+
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('圖片大小不可超過 5MB');
+        return;
+      }
+
+      // Create temporary URL for cropping
+      const url = URL.createObjectURL(file);
+      setTempCoverUrl(url);
+      setShowCoverCrop(true);
+    }
+  }, []);
+
+  // Handle logo crop completion
+  const handleLogoCropComplete = useCallback((croppedBlob: Blob) => {
+    // Convert blob to File
+    const file = new File([croppedBlob], 'logo.jpg', { type: 'image/jpeg' });
+    setLogoFile(file);
+
+    // Create preview
+    const url = URL.createObjectURL(croppedBlob);
+    setLogoPreview(url);
+
+    // Cleanup temp URL
+    if (tempLogoUrl) {
+      URL.revokeObjectURL(tempLogoUrl);
+      setTempLogoUrl(null);
+    }
+    setShowLogoCrop(false);
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [tempLogoUrl]);
+
+  // Handle cover crop completion
+  const handleCoverCropComplete = useCallback((croppedBlob: Blob) => {
+    // Convert blob to File
+    const file = new File([croppedBlob], 'cover.jpg', { type: 'image/jpeg' });
+    setCoverFile(file);
+
+    // Create preview
+    const url = URL.createObjectURL(croppedBlob);
+    setCoverPreview(url);
+
+    // Cleanup temp URL
+    if (tempCoverUrl) {
+      URL.revokeObjectURL(tempCoverUrl);
+      setTempCoverUrl(null);
+    }
+    setShowCoverCrop(false);
+
+    // Reset file input
+    if (coverInputRef.current) {
+      coverInputRef.current.value = '';
+    }
+  }, [tempCoverUrl]);
+
+  const removeCover = () => {
+    setCoverFile(null);
+    setCoverPreview(null);
+    setFormData(prev => ({ ...prev, cover_image_url: null }));
+    if (coverInputRef.current) {
+      coverInputRef.current.value = '';
+    }
+  };
+
+  // Handle crop modal close
+  const handleLogoCropClose = useCallback(() => {
+    setShowLogoCrop(false);
+    if (tempLogoUrl) {
+      URL.revokeObjectURL(tempLogoUrl);
+      setTempLogoUrl(null);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [tempLogoUrl]);
+
+  const handleCoverCropClose = useCallback(() => {
+    setShowCoverCrop(false);
+    if (tempCoverUrl) {
+      URL.revokeObjectURL(tempCoverUrl);
+      setTempCoverUrl(null);
+    }
+    if (coverInputRef.current) {
+      coverInputRef.current.value = '';
+    }
+  }, [tempCoverUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,6 +228,10 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
 
         if (uploadResult.success) {
           updatedData.logo_url = uploadResult.logoUrl;
+          // Also set favicon URL from the same upload
+          if (uploadResult.faviconUrl) {
+            updatedData.favicon_url = uploadResult.faviconUrl;
+          }
         } else {
           alert(uploadResult.error || '圖片上傳失敗');
           setIsSaving(false);
@@ -129,8 +239,31 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
         }
       }
 
+      // Upload cover image if a new file was selected
+      if (coverFile) {
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', coverFile);
+        uploadFormData.append('templeId', temple.id);
+
+        const uploadRes = await fetch('/api/upload/cover', {
+          method: 'POST',
+          body: uploadFormData,
+        });
+
+        const uploadResult = await uploadRes.json();
+
+        if (uploadResult.success) {
+          updatedData.cover_image_url = uploadResult.coverUrl;
+        } else {
+          alert(uploadResult.error || '封面圖片上傳失敗');
+          setIsSaving(false);
+          return;
+        }
+      }
+
       await onSave(updatedData);
       setLogoFile(null); // Clear file after successful save
+      setCoverFile(null); // Clear cover file after successful save
     } finally {
       setIsSaving(false);
     }
@@ -263,6 +396,50 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
                 </div>
               </div>
 
+              {/* Temple Cover Image Upload */}
+              <div>
+                <label className="block text-sm font-medium text-stone-700 mb-2">
+                  封面圖片
+                </label>
+                <div className="mt-1.5">
+                  {!coverPreview ? (
+                    <div
+                      onClick={() => coverInputRef.current?.click()}
+                      className="border-2 border-dashed border-stone-300 rounded-xl p-6 text-center cursor-pointer hover:border-stone-400 transition-colors"
+                    >
+                      <Upload className="mx-auto h-10 w-10 text-stone-400" />
+                      <p className="mt-2 text-sm text-stone-600">點擊上傳封面圖片</p>
+                      <p className="text-xs text-stone-500 mt-1">JPG, PNG 或 WebP (最大 5MB)</p>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <div className="relative w-full h-48">
+                        <Image
+                          src={coverPreview}
+                          alt="封面圖片預覽"
+                          fill
+                          className="object-cover rounded-xl"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={removeCover}
+                        className="absolute top-2 right-2 p-1.5 bg-white border border-stone-200 rounded-lg hover:bg-stone-50"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                  <input
+                    ref={coverInputRef}
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    onChange={handleCoverSelect}
+                    className="hidden"
+                  />
+                </div>
+              </div>
+
               {/* Intro */}
               <div>
                 <label className="block text-sm font-medium text-stone-700 mb-2">
@@ -379,36 +556,10 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
                 <span className="mr-2 text-xl">🖼️</span>
                 圖片媒體
               </h3>
-              <p className="text-sm text-stone-500 mt-1">設定寺廟的封面圖片與相簿</p>
+              <p className="text-sm text-stone-500 mt-1">管理寺廟的相簿照片</p>
             </div>
 
-            <div className="p-6 space-y-6">
-              {/* Cover Image */}
-              <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">
-                  封面圖片網址
-                </label>
-                <input
-                  type="url"
-                  value={formData.cover_image_url || ''}
-                  onChange={(e) => handleInputChange('cover_image_url', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-stone-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 outline-none transition-all"
-                  placeholder="https://example.com/image.jpg"
-                />
-                {formData.cover_image_url && (
-                  <div className="mt-4">
-                    <img
-                      src={formData.cover_image_url}
-                      alt="封面預覽"
-                      className="w-full h-48 object-cover rounded-xl"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-
+            <div className="p-6">
               {/* Gallery Photos */}
               <div>
                 <label className="block text-sm font-medium text-stone-700 mb-2">
@@ -511,6 +662,33 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
           </button>
         </div>
       </form>
+
+      {/* Crop Modals */}
+      {tempLogoUrl && (
+        <ImageCropModal
+          isOpen={showLogoCrop}
+          onClose={handleLogoCropClose}
+          imageUrl={tempLogoUrl}
+          aspectRatio={ASPECT_RATIOS.LOGO}
+          onCropComplete={handleLogoCropComplete}
+          title="裁切寺廟標誌"
+          minWidth={200}
+          minHeight={200}
+        />
+      )}
+
+      {tempCoverUrl && (
+        <ImageCropModal
+          isOpen={showCoverCrop}
+          onClose={handleCoverCropClose}
+          imageUrl={tempCoverUrl}
+          aspectRatio={ASPECT_RATIOS.COVER}
+          onCropComplete={handleCoverCropComplete}
+          title="裁切封面圖片"
+          minWidth={640}
+          minHeight={360}
+        />
+      )}
     </div>
   );
 }

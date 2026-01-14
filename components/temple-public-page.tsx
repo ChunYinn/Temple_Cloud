@@ -139,6 +139,51 @@ type TempleData = {
   services?: ServiceData[];
 };
 
+// Helper function to process social media URLs
+const processSocialMediaUrl = (url: string | null | undefined, type: 'facebook' | 'line' | 'instagram') => {
+  if (!url) return null;
+
+  // Remove any whitespace
+  url = url.trim();
+
+  switch (type) {
+    case 'facebook':
+      // If it's already a full URL, return as is
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        return url;
+      }
+      // If it's just a page name/ID, construct the full URL
+      return `https://www.facebook.com/${url}`;
+
+    case 'line':
+      // If it's already a full URL (e.g., line.me URL), return as is
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        return url;
+      }
+      // If it starts with @, remove it
+      if (url.startsWith('@')) {
+        url = url.substring(1);
+      }
+      // Construct LINE add friend URL
+      return `https://line.me/R/ti/p/@${url}`;
+
+    case 'instagram':
+      // If it's already a full URL, return as is
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        return url;
+      }
+      // If it starts with @, remove it
+      if (url.startsWith('@')) {
+        url = url.substring(1);
+      }
+      // Construct Instagram URL
+      return `https://www.instagram.com/${url}/`;
+
+    default:
+      return url;
+  }
+};
+
 export function TemplePublicPage({ temple }: { temple: TempleData }) {
   const [activeTab, setActiveTab] = useState("home");
   const [activeSection, setActiveSection] = useState("home");
@@ -152,9 +197,9 @@ export function TemplePublicPage({ temple }: { temple: TempleData }) {
     email: temple.email || `contact@${temple.slug}.temple.tw`,
     hours: temple.hours || TEMPLE_DEFAULTS.hours,
     social: {
-      facebook: temple.facebook_url || "#",
-      line: temple.line_id || "#",
-      instagram: temple.instagram_url || "#",
+      facebook: temple.facebook_url || null,
+      line: temple.line_id || null,
+      instagram: temple.instagram_url || null,
     },
     fullDescription: temple.full_description || temple.intro ||
       "本宮秉持「慈悲濟世、普渡眾生」之精神，致力於弘揚傳統文化，服務地方信眾。廟內供奉玉皇大帝、觀世音菩薩、關聖帝君等諸神，建築莊嚴肅穆，雕樑畫棟，充分展現台灣傳統廟宇之美。",
@@ -643,44 +688,47 @@ const MobileAbout = ({ temple, gallery }: any) => {
         </div>
       </section>
 
-      <section className="px-4 mt-6">
-        <h2 className="text-lg font-bold text-stone-800 mb-3">追蹤我們</h2>
-        <div className="flex justify-center gap-4">
-          {temple.facebook_url && (
-            <a
-              href={temple.facebook_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
-              aria-label="Facebook"
-            >
-              <FacebookIcon className="h-6 w-6" />
-            </a>
-          )}
-          {temple.line_id && (
-            <a
-              href={`https://line.me/R/ti/p/${temple.line_id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-12 h-12 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
-              aria-label="LINE"
-            >
-              <LineIcon className="h-6 w-6" />
-            </a>
-          )}
-          {temple.instagram_url && (
-            <a
-              href={temple.instagram_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-12 h-12 bg-gradient-to-br from-purple-600 via-pink-600 to-orange-600 hover:opacity-90 text-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
-              aria-label="Instagram"
-            >
-              <InstagramIcon className="h-6 w-6" />
-            </a>
-          )}
-        </div>
-      </section>
+      {/* Social Media Section - Only show if at least one social media exists */}
+      {(temple.facebook_url || temple.line_id || temple.instagram_url) && (
+        <section className="px-4 mt-6">
+          <h2 className="text-lg font-bold text-stone-800 mb-3">追蹤我們</h2>
+          <div className="flex justify-center gap-4">
+            {temple.facebook_url && (
+              <a
+                href={processSocialMediaUrl(temple.facebook_url, 'facebook')!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+                aria-label="Facebook 粉絲專頁"
+              >
+                <FacebookIcon className="h-6 w-6" />
+              </a>
+            )}
+            {temple.line_id && (
+              <a
+                href={processSocialMediaUrl(temple.line_id, 'line')!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-12 h-12 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+                aria-label="LINE 官方帳號"
+              >
+                <LineIcon className="h-6 w-6" />
+              </a>
+            )}
+            {temple.instagram_url && (
+              <a
+                href={processSocialMediaUrl(temple.instagram_url, 'instagram')!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-12 h-12 bg-gradient-to-br from-purple-600 via-pink-600 to-orange-600 hover:opacity-90 text-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+                aria-label="Instagram"
+              >
+                <InstagramIcon className="h-6 w-6" />
+              </a>
+            )}
+          </div>
+        </section>
+      )}
 
       <footer className="mt-8 pb-4 text-center text-stone-400 text-xs">
         <p>© {currentYear} {BRAND.name}</p>
@@ -1035,45 +1083,47 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
               </div>
             </div>
 
-            {/* Social Links */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100">
-              <h3 className="font-bold text-stone-800 mb-4">追蹤我們</h3>
-              <div className="space-y-2">
-                {temple.facebook_url && (
-                  <a
-                    href={temple.facebook_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full py-3 px-4 rounded-xl font-medium flex items-center gap-3 border border-stone-200 text-stone-700 transition-colors hover:bg-blue-50 hover:text-blue-600"
-                  >
-                    <FacebookIcon className="h-5 w-5" />
-                    <span>Facebook 粉絲專頁</span>
-                  </a>
-                )}
-                {temple.line_id && (
-                  <a
-                    href={`https://line.me/R/ti/p/${temple.line_id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full py-3 px-4 rounded-xl font-medium flex items-center gap-3 border border-stone-200 text-stone-700 transition-colors hover:bg-green-50 hover:text-green-600"
-                  >
-                    <LineIcon className="h-5 w-5" />
-                    <span>LINE 官方帳號</span>
-                  </a>
-                )}
-                {temple.instagram_url && (
-                  <a
-                    href={temple.instagram_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full py-3 px-4 rounded-xl font-medium flex items-center gap-3 border border-stone-200 text-stone-700 transition-colors hover:bg-pink-50 hover:text-pink-600"
-                  >
-                    <InstagramIcon className="h-5 w-5" />
-                    <span>Instagram</span>
-                  </a>
-                )}
+            {/* Social Links - Only show if at least one social media exists */}
+            {(temple.facebook_url || temple.line_id || temple.instagram_url) && (
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100">
+                <h3 className="font-bold text-stone-800 mb-4">追蹤我們</h3>
+                <div className="space-y-2">
+                  {temple.facebook_url && (
+                    <a
+                      href={processSocialMediaUrl(temple.facebook_url, 'facebook')!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-3 px-4 rounded-xl font-medium flex items-center gap-3 border border-stone-200 text-stone-700 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                    >
+                      <FacebookIcon className="h-5 w-5" />
+                      <span>Facebook 粉絲專頁</span>
+                    </a>
+                  )}
+                  {temple.line_id && (
+                    <a
+                      href={processSocialMediaUrl(temple.line_id, 'line')!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-3 px-4 rounded-xl font-medium flex items-center gap-3 border border-stone-200 text-stone-700 transition-colors hover:bg-green-50 hover:text-green-600"
+                    >
+                      <LineIcon className="h-5 w-5" />
+                      <span>LINE 官方帳號</span>
+                    </a>
+                  )}
+                  {temple.instagram_url && (
+                    <a
+                      href={processSocialMediaUrl(temple.instagram_url, 'instagram')!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-3 px-4 rounded-xl font-medium flex items-center gap-3 border border-stone-200 text-stone-700 transition-colors hover:bg-pink-50 hover:text-pink-600"
+                    >
+                      <InstagramIcon className="h-5 w-5" />
+                      <span>Instagram</span>
+                    </a>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -1395,42 +1445,50 @@ const DesktopAbout = ({ temple, gallery }: any) => {
             </div>
           )}
 
-          {/* Social */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100">
-            <h3 className="font-bold text-stone-800 mb-4">追蹤我們</h3>
-            <div className="flex gap-3">
-              {temple.facebook_url && (
-                <a
-                  href={temple.facebook_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 py-3 border border-stone-200 rounded-xl hover:bg-stone-50 transition-colors flex items-center justify-center"
-                >
-                  <FacebookIcon className="h-6 w-6" />
-                </a>
-              )}
-              {temple.line_id && (
-                <a
-                  href={`https://line.me/R/ti/p/${temple.line_id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 py-3 border border-stone-200 rounded-xl hover:bg-stone-50 transition-colors flex items-center justify-center"
-                >
-                  <LineIcon className="h-6 w-6" />
-                </a>
-              )}
-              {temple.instagram_url && (
-                <a
-                  href={temple.instagram_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 py-3 border border-stone-200 rounded-xl hover:bg-stone-50 transition-colors flex items-center justify-center"
-                >
-                  <InstagramIcon className="h-6 w-6" />
-                </a>
-              )}
+          {/* Social - Only show if at least one social media exists */}
+          {(temple.facebook_url || temple.line_id || temple.instagram_url) && (
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100">
+              <h3 className="font-bold text-stone-800 mb-4">追蹤我們</h3>
+              <div className="flex gap-3">
+                {temple.facebook_url && (
+                  <a
+                    href={processSocialMediaUrl(temple.facebook_url, 'facebook')!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 py-3 border border-stone-200 rounded-xl hover:bg-stone-50 transition-colors flex items-center justify-center"
+                    aria-label="Facebook 粉絲專頁"
+                    title="Facebook 粉絲專頁"
+                  >
+                    <FacebookIcon className="h-6 w-6" />
+                  </a>
+                )}
+                {temple.line_id && (
+                  <a
+                    href={processSocialMediaUrl(temple.line_id, 'line')!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 py-3 border border-stone-200 rounded-xl hover:bg-stone-50 transition-colors flex items-center justify-center"
+                    aria-label="LINE 官方帳號"
+                    title="LINE 官方帳號"
+                  >
+                    <LineIcon className="h-6 w-6" />
+                  </a>
+                )}
+                {temple.instagram_url && (
+                  <a
+                    href={processSocialMediaUrl(temple.instagram_url, 'instagram')!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 py-3 border border-stone-200 rounded-xl hover:bg-stone-50 transition-colors flex items-center justify-center"
+                    aria-label="Instagram"
+                    title="Instagram"
+                  >
+                    <InstagramIcon className="h-6 w-6" />
+                  </a>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

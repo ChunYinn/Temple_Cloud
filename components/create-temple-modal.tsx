@@ -1,23 +1,27 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useActionState } from 'react';
 import { createTempleAction } from '@/app/actions';
 import { rootDomain } from '@/lib/utils';
 import { TimeRangePicker } from './time-range-picker';
-import { Loader2, AlertCircle, Upload, X } from 'lucide-react';
+import { Loader2, AlertCircle, Upload, X, Crop } from 'lucide-react';
 import {
   Dialog,
-  DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogPortal,
+  DialogOverlay,
 } from '@/components/ui/dialog';
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import Image from 'next/image';
+import { ImageCropModalStandalone, ASPECT_RATIOS } from './image-crop-modal-standalone';
 
 export function CreateTempleModal({ onClose }: { onClose: () => void }) {
   // We'll handle the form submission manually now to upload the logo first
@@ -28,7 +32,19 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
+  // Cropping modal states
+  const [showLogoCrop, setShowLogoCrop] = useState(false);
+  const [showCoverCrop, setShowCoverCrop] = useState(false);
+  const [tempLogoUrl, setTempLogoUrl] = useState<string | null>(null);
+  const [tempCoverUrl, setTempCoverUrl] = useState<string | null>(null);
+
+  // Track if crop modal is open to conditionally render main dialog
+  const isCropModalOpen = showLogoCrop || showCoverCrop;
 
   // Form values for validation
   const [formValues, setFormValues] = useState({
@@ -40,7 +56,6 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
     phone: '',
     email: '',
     hours: '每日 06:00 - 21:00',
-    cover_image_url: '',
     facebook_url: '',
     line_id: '',
     instagram_url: '',
@@ -56,6 +71,7 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
       if (formValues.slug && !/^[a-z0-9-]+$/.test(formValues.slug)) {
         errors.push('網址名稱只能包含小寫英文、數字和連字符');
       }
+      if (!logoFile) errors.push('請上傳寺廟標誌');
       if (!formValues.intro.trim()) errors.push('請輸入寺廟簡介');
     } else if (step === 2) {
       if (!formValues.address.trim()) errors.push('請輸入地址');
@@ -89,7 +105,7 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
     setFormValues(prev => ({ ...prev, hours }));
   }, [hours]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file type
@@ -104,23 +120,107 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
         return;
       }
 
-      setLogoFile(file);
+      // Create temporary URL for cropping
+      const url = URL.createObjectURL(file);
+      setTempLogoUrl(url);
+      setShowLogoCrop(true);
       setValidationErrors([]);
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLogoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
     }
-  };
+  }, []);
+
+  const handleCoverSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+        setValidationErrors(['請選擇有效的圖片格式 (JPG, PNG, WebP)']);
+        return;
+      }
+
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setValidationErrors(['圖片大小不可超過 5MB']);
+        return;
+      }
+
+      // Create temporary URL for cropping
+      const url = URL.createObjectURL(file);
+      setTempCoverUrl(url);
+      setShowCoverCrop(true);
+      setValidationErrors([]);
+    }
+  }, []);
+
+  // Handle logo crop completion
+  const handleLogoCropComplete = useCallback((croppedBlob: Blob) => {
+    const file = new File([croppedBlob], 'logo.jpg', { type: 'image/jpeg' });
+    setLogoFile(file);
+    const url = URL.createObjectURL(croppedBlob);
+    setLogoPreview(url);
+
+    if (tempLogoUrl) {
+      URL.revokeObjectURL(tempLogoUrl);
+      setTempLogoUrl(null);
+    }
+    setShowLogoCrop(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [tempLogoUrl]);
+
+  // Handle cover crop completion
+  const handleCoverCropComplete = useCallback((croppedBlob: Blob) => {
+    const file = new File([croppedBlob], 'cover.jpg', { type: 'image/jpeg' });
+    setCoverFile(file);
+    const url = URL.createObjectURL(croppedBlob);
+    setCoverPreview(url);
+
+    if (tempCoverUrl) {
+      URL.revokeObjectURL(tempCoverUrl);
+      setTempCoverUrl(null);
+    }
+    setShowCoverCrop(false);
+    if (coverInputRef.current) {
+      coverInputRef.current.value = '';
+    }
+  }, [tempCoverUrl]);
+
+  // Handle crop modal close
+  const handleLogoCropClose = useCallback(() => {
+    setShowLogoCrop(false);
+    if (tempLogoUrl) {
+      URL.revokeObjectURL(tempLogoUrl);
+      setTempLogoUrl(null);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [tempLogoUrl]);
+
+  const handleCoverCropClose = useCallback(() => {
+    setShowCoverCrop(false);
+    if (tempCoverUrl) {
+      URL.revokeObjectURL(tempCoverUrl);
+      setTempCoverUrl(null);
+    }
+    if (coverInputRef.current) {
+      coverInputRef.current.value = '';
+    }
+  }, [tempCoverUrl]);
 
   const removeLogo = () => {
     setLogoFile(null);
     setLogoPreview(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+  const removeCover = () => {
+    setCoverFile(null);
+    setCoverPreview(null);
+    if (coverInputRef.current) {
+      coverInputRef.current.value = '';
     }
   };
 
@@ -139,14 +239,15 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
     try {
       const formData = new FormData(e.currentTarget);
 
-      // Upload logo first if selected
+      // Upload logo first (required)
       let logoUrl = '';
       let faviconUrl = '';
+      const tempId = 'temp-' + Date.now();
 
       if (logoFile) {
         const uploadFormData = new FormData();
         uploadFormData.append('file', logoFile);
-        uploadFormData.append('templeId', 'temp-' + Date.now()); // Temporary ID for upload
+        uploadFormData.append('templeId', tempId);
 
         const uploadRes = await fetch('/api/upload/logo', {
           method: 'POST',
@@ -156,16 +257,43 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
         const uploadResult = await uploadRes.json();
 
         if (!uploadResult.success) {
-          setCreateState({ error: uploadResult.error || '圖片上傳失敗' });
+          setCreateState({ error: uploadResult.error || '標誌上傳失敗' });
           setIsCreating(false);
           return;
         }
 
         logoUrl = uploadResult.logoUrl || '';
+        // Also get favicon URL from the same upload
+        faviconUrl = uploadResult.faviconUrl || '';
       }
 
-      // Add the URL to form data
+      // Upload cover image if selected
+      let coverUrl = '';
+      if (coverFile) {
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', coverFile);
+        uploadFormData.append('templeId', tempId);
+
+        const uploadRes = await fetch('/api/upload/cover', {
+          method: 'POST',
+          body: uploadFormData,
+        });
+
+        const uploadResult = await uploadRes.json();
+
+        if (!uploadResult.success) {
+          setCreateState({ error: uploadResult.error || '封面圖片上傳失敗' });
+          setIsCreating(false);
+          return;
+        }
+
+        coverUrl = uploadResult.coverUrl || '';
+      }
+
+      // Add the URLs to form data
       if (logoUrl) formData.append('logo_url', logoUrl);
+      if (faviconUrl) formData.append('favicon_url', faviconUrl);
+      if (coverUrl) formData.append('cover_image_url', coverUrl);
 
       // Call the server action
       const result = await createTempleAction(null, formData);
@@ -184,10 +312,20 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-lg mx-auto p-0 max-h-[90vh] overflow-hidden">
+    <>
+      <Dialog open onOpenChange={() => {}}>
+        <DialogPortal>
+          <DialogOverlay />
+          <DialogPrimitive.Content
+            className={cn(
+              "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 translate-x-[-50%] translate-y-[-50%] shadow-lg duration-200",
+              "w-full max-w-lg mx-auto p-0 h-[100vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden"
+            )}
+            onPointerDownOutside={(e) => e.preventDefault()}
+            onEscapeKeyDown={(e) => e.preventDefault()}
+        >
         {/* Header - Fixed */}
-        <div className="sticky top-0 bg-white z-10 border-b border-stone-200 px-4 sm:px-6 pt-6 pb-4">
+        <div className="flex-shrink-0 bg-white z-10 border-b border-stone-200 px-4 sm:px-6 pt-6 pb-4">
           <DialogHeader>
             <DialogTitle className="text-lg sm:text-xl">建立新寺廟</DialogTitle>
             <DialogDescription className="text-sm">
@@ -232,7 +370,7 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Content - Scrollable */}
-        <div className="overflow-y-auto flex-1 px-4 sm:px-6 py-4">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 py-4 min-h-0 scrollbar-thin scrollbar-thumb-stone-300 scrollbar-track-stone-100">
           <form onSubmit={handleSubmit} id="temple-form" className="space-y-4">
             {/* Step 1: Basic Information */}
             {currentStep === 1 && (
@@ -278,9 +416,11 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
                   <p className="text-xs text-stone-500 mt-1">僅可使用小寫英文字母、數字和連字符</p>
                 </div>
 
-                {/* Temple Logo Upload */}
+                {/* Temple Logo Upload - Required */}
                 <div>
-                  <Label className="text-sm font-medium">寺廟標誌</Label>
+                  <Label className="text-sm font-medium">
+                    寺廟標誌 (也會成為網站圖標) <span className="text-red-500">*</span>
+                  </Label>
                   <div className="mt-1.5">
                     {!logoPreview ? (
                       <div
@@ -300,6 +440,12 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
                             fill
                             className="object-cover rounded-lg"
                           />
+                          {logoFile && (
+                            <div className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-black/70 text-white text-xs px-2 py-0.5 rounded flex items-center gap-1">
+                              <Crop className="w-3 h-3" />
+                              已裁切
+                            </div>
+                          )}
                         </div>
                         <Button
                           type="button"
@@ -310,9 +456,6 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
                         >
                           <X className="h-4 w-4" />
                         </Button>
-                        <p className="text-xs text-stone-600 text-center mt-2">
-                          將自動生成網站圖標
-                        </p>
                       </div>
                     )}
                     <input
@@ -322,10 +465,56 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
                       onChange={handleFileSelect}
                       className="hidden"
                     />
-                    {/* Hidden input to pass the file with the form */}
-                    {logoFile && (
-                      <input type="hidden" name="logo_file_name" value={logoFile.name} />
+                  </div>
+                </div>
+
+                {/* Cover Image Upload - Optional */}
+                <div>
+                  <Label className="text-sm font-medium">封面圖片</Label>
+                  <div className="mt-1.5">
+                    {!coverPreview ? (
+                      <div
+                        onClick={() => coverInputRef.current?.click()}
+                        className="border-2 border-dashed border-stone-300 rounded-lg p-4 text-center cursor-pointer hover:border-stone-400 transition-colors"
+                      >
+                        <Upload className="mx-auto h-8 w-8 text-stone-400" />
+                        <p className="mt-1 text-sm text-stone-600">點擊上傳封面圖片</p>
+                        <p className="text-xs text-stone-500 mt-1">建議尺寸 1920x1080 (16:9)</p>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <div className="relative w-full h-32">
+                          <Image
+                            src={coverPreview}
+                            alt="封面圖片預覽"
+                            fill
+                            className="object-cover rounded-lg"
+                          />
+                          {coverFile && (
+                            <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-2 py-0.5 rounded flex items-center gap-1">
+                              <Crop className="w-3 h-3" />
+                              已裁切
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={removeCover}
+                          size="sm"
+                          variant="outline"
+                          className="absolute top-1 right-1 p-1 h-8 w-8"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     )}
+                    <input
+                      ref={coverInputRef}
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
+                      onChange={handleCoverSelect}
+                      className="hidden"
+                    />
                   </div>
                 </div>
 
@@ -363,22 +552,6 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
                   />
                 </div>
 
-                {/* Cover Image URL */}
-                <div>
-                  <Label htmlFor="cover_image_url" className="text-sm font-medium">
-                    封面圖片網址
-                  </Label>
-                  <Input
-                    id="cover_image_url"
-                    name="cover_image_url"
-                    type="url"
-                    placeholder="https://example.com/temple-cover.jpg"
-                    className="mt-1.5 w-full"
-                    value={formValues.cover_image_url}
-                    onChange={(e) => handleInputChange('cover_image_url', e.target.value)}
-                  />
-                  <p className="text-xs text-stone-500 mt-1">可稍後在設定中上傳</p>
-                </div>
               </div>
             )}
 
@@ -520,7 +693,7 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Footer - Fixed */}
-        <div className="sticky bottom-0 bg-white border-t border-stone-200 px-4 sm:px-6 py-4">
+        <div className="flex-shrink-0 bg-white border-t border-stone-200 px-4 sm:px-6 py-4">
           <div className="flex gap-2">
             {/* Back Button - Only on Step 2 */}
             {currentStep > 1 && (
@@ -582,7 +755,36 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
             )}
           </div>
         </div>
-      </DialogContent>
+        </DialogPrimitive.Content>
+      </DialogPortal>
     </Dialog>
+
+    {/* Crop Modals - Using standalone version to avoid Dialog conflicts */}
+    {tempLogoUrl && (
+      <ImageCropModalStandalone
+        isOpen={showLogoCrop}
+        onClose={handleLogoCropClose}
+        imageUrl={tempLogoUrl}
+        aspectRatio={ASPECT_RATIOS.LOGO}
+        onCropComplete={handleLogoCropComplete}
+        title="裁切寺廟標誌"
+        minWidth={200}
+        minHeight={200}
+      />
+    )}
+
+    {tempCoverUrl && (
+      <ImageCropModalStandalone
+        isOpen={showCoverCrop}
+        onClose={handleCoverCropClose}
+        imageUrl={tempCoverUrl}
+        aspectRatio={ASPECT_RATIOS.COVER}
+        onCropComplete={handleCoverCropComplete}
+        title="裁切封面圖片"
+        minWidth={640}
+        minHeight={360}
+      />
+    )}
+  </>
   );
 }

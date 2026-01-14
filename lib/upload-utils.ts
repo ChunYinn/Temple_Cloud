@@ -118,13 +118,14 @@ export async function deleteFromR2(key: string): Promise<boolean> {
   }
 }
 
-// Upload temple logo
+// Upload temple logo (and automatically generate favicon from it)
 export async function uploadTempleLogo(
   templeId: string,
   file: File
 ): Promise<{
   success: boolean;
   logoUrl?: string;
+  faviconUrl?: string;
   error?: string;
 }> {
   try {
@@ -146,9 +147,15 @@ export async function uploadTempleLogo(
       return { success: false, error: '標誌上傳失敗' };
     }
 
+    // Also generate and upload favicon from the same image
+    const favicon = await generateFavicon(buffer);
+    const faviconKey = generateAssetKey('favicon', templeId, 'png');
+    const faviconUploaded = await uploadToR2(faviconKey, favicon, 'image/png');
+
     return {
       success: true,
       logoUrl: getPublicUrl(logoKey),
+      faviconUrl: faviconUploaded ? getPublicUrl(faviconKey) : undefined,
     };
   } catch (error) {
     console.error('Logo upload error:', error);
@@ -222,6 +229,44 @@ export async function uploadGalleryPhoto(
   } catch (error) {
     console.error('Gallery upload error:', error);
     return { success: false, error: '處理照片時發生錯誤' };
+  }
+}
+
+// Upload temple cover image
+export async function uploadTempleCover(
+  templeId: string,
+  file: File
+): Promise<{
+  success: boolean;
+  coverUrl?: string;
+  error?: string;
+}> {
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const extension = file.type.split('/')[1] || 'jpg';
+
+    // Process cover image
+    const processedCover = await processImage(buffer, {
+      maxWidth: UPLOAD_CONFIG.COVER.MAX_WIDTH,
+      maxHeight: UPLOAD_CONFIG.COVER.MAX_HEIGHT,
+      format: 'jpeg',
+    });
+
+    // Upload cover
+    const coverKey = generateAssetKey('cover', templeId, extension);
+    const uploaded = await uploadToR2(coverKey, processedCover, 'image/jpeg');
+
+    if (!uploaded) {
+      return { success: false, error: '封面圖片上傳失敗' };
+    }
+
+    return {
+      success: true,
+      coverUrl: getPublicUrl(coverKey),
+    };
+  } catch (error) {
+    console.error('Cover upload error:', error);
+    return { success: false, error: '處理封面圖片時發生錯誤' };
   }
 }
 

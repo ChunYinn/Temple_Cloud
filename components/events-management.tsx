@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useToast } from '@/lib/toast-context';
 import {
   CalendarDays,
   MapPin,
@@ -49,6 +50,7 @@ export function EventsManagement({ templeId }: { templeId: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { success, error: showError } = useToast();
 
   // Form state
   const [formData, setFormData] = useState<EventFormData>({
@@ -140,8 +142,10 @@ export function EventsManagement({ templeId }: { templeId: string }) {
         await fetchEvents(); // Refresh the list
         setShowNewEventForm(false);
         resetForm();
+        success(editingEvent ? '活動更新成功' : '活動建立成功');
       } else {
         setError(data.error || '儲存失敗');
+        showError(data.error || '儲存失敗');
       }
     } catch (err) {
       setError('儲存活動時發生錯誤');
@@ -162,11 +166,12 @@ export function EventsManagement({ templeId }: { templeId: string }) {
 
       if (data.success) {
         await fetchEvents(); // Refresh the list
+        success('活動已刪除');
       } else {
-        alert(data.error || '刪除失敗');
+        showError(data.error || '刪除失敗');
       }
     } catch (err) {
-      alert('刪除活動時發生錯誤');
+      showError('刪除活動時發生錯誤');
     }
   };
 
@@ -179,7 +184,7 @@ export function EventsManagement({ templeId }: { templeId: string }) {
       event_time: event.event_time,
       location: event.location,
       image_url: event.image_url || '',
-      max_capacity: event.max_capacity,
+      max_capacity: event.max_capacity ?? null,
       registration_deadline: event.registration_deadline ? formatDateForInput(event.registration_deadline) : '',
       is_active: event.is_active
     });

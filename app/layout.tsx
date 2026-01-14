@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Noto_Sans_TC } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { ClerkProvider } from '@clerk/nextjs';
+import { ToastProvider } from '@/lib/toast-context';
 import './globals.css';
 
 const notoSansTC = Noto_Sans_TC({
@@ -24,7 +25,9 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="zh-TW">
         <body className={`${notoSansTC.variable} antialiased font-sans bg-stone-50`}>
-          {children}
+          <ToastProvider>
+            {children}
+          </ToastProvider>
           <SpeedInsights />
         </body>
       </html>

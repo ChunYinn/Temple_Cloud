@@ -6,12 +6,15 @@ import { ArrowLeft, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { rootDomain, protocol } from '@/lib/utils';
 import { EventsManagement } from '@/components/events-management';
-import { TempleStatsDashboard } from '@/components/temple-stats-dashboard';
+import { StatsDashboard } from '@/components/stats-dashboard';
 import { TempleSettingsForm } from '@/components/temple-settings-form';
 import { PrayerServicesManagement } from '@/components/prayer-services-management';
+import { OrdersManagement } from '@/components/orders-management';
+import { useToast } from '@/lib/toast-context';
 
 export function TempleManagement({ temple }: { temple: any }) {
   const [activeTab, setActiveTab] = useState('stats');
+  const { success, error: showError } = useToast();
 
   const templeEmoji = '🏛️';
 
@@ -91,7 +94,7 @@ export function TempleManagement({ temple }: { temple: any }) {
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Stats Tab */}
-        {activeTab === 'stats' && <TempleStatsDashboard temple={temple} />}
+        {activeTab === 'stats' && <StatsDashboard templeId={temple.id} />}
 
         {/* Prayer Services Tab */}
         {activeTab === 'services' && (
@@ -105,13 +108,7 @@ export function TempleManagement({ temple }: { temple: any }) {
 
         {/* Orders Tab */}
         {activeTab === 'orders' && (
-          <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">📋</span>
-            </div>
-            <h3 className="text-lg font-medium text-stone-800 mb-2">訂單管理</h3>
-            <p className="text-stone-500">查看香油錢、點燈服務等訂單記錄</p>
-          </div>
+          <OrdersManagement templeId={temple.id} />
         )}
 
         {/* Settings Tab */}
@@ -131,16 +128,13 @@ export function TempleManagement({ temple }: { temple: any }) {
                 const result = await response.json();
 
                 if (result.success) {
-                  // You might want to show a success message here
-                  console.log('Temple settings saved successfully');
-                  // Could refresh the page or update the temple data
-                  window.location.reload();
+                  success('儲存成功');
                 } else {
-                  throw new Error(result.error || 'Failed to save settings');
+                  throw new Error(result.error || '儲存失敗');
                 }
               } catch (error) {
                 console.error('Error saving temple settings:', error);
-                alert('儲存失敗，請稍後再試');
+                showError(error instanceof Error ? error.message : '儲存失敗，請稍後再試');
               }
             }}
           />

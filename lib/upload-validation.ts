@@ -19,6 +19,10 @@ export const UPLOAD_CONFIG = {
     MAX_WIDTH: 1200,
     MAX_HEIGHT: 800,
     MAX_COUNT: 6,
+  },
+  COVER: {
+    MAX_WIDTH: 1920,
+    MAX_HEIGHT: 1080,
   }
 };
 

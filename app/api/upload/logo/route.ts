@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { uploadTempleLogo, validateImage } from '@/lib/upload-utils';
+import { uploadTempleLogo } from '@/lib/upload-utils';
+import { validateImage } from '@/lib/upload-validation';
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,6 +39,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       logoUrl: result.logoUrl,
+      faviconUrl: result.faviconUrl,
     });
   } catch (error) {
     console.error('Logo upload API error:', error);
