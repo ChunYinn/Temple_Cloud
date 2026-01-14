@@ -28,6 +28,7 @@ export async function createTempleAction(
   const name = (formData.get('name') as string)?.trim();
   const rawSlug = (formData.get('slug') as string) ?? '';
   const intro = (formData.get('intro') as string)?.trim() || null;
+  const full_description = (formData.get('full_description') as string)?.trim() || null;
   const address = (formData.get('address') as string)?.trim() || null;
   const phone = (formData.get('phone') as string)?.trim() || null;
   const email = (formData.get('email') as string)?.trim() || null;
@@ -35,6 +36,10 @@ export async function createTempleAction(
   const avatar_emoji = (formData.get('avatar_emoji') as string)?.trim() || '🏛️';
   const logo_url = (formData.get('logo_url') as string)?.trim() || null;
   const favicon_url = (formData.get('favicon_url') as string)?.trim() || null;
+  const cover_image_url = (formData.get('cover_image_url') as string)?.trim() || null;
+  const facebook_url = (formData.get('facebook_url') as string)?.trim() || null;
+  const line_id = (formData.get('line_id') as string)?.trim() || null;
+  const instagram_url = (formData.get('instagram_url') as string)?.trim() || null;
 
   const slug = sanitizeSlug(rawSlug);
 
@@ -57,6 +62,7 @@ export async function createTempleAction(
         name,
         slug,
         intro,
+        full_description,
         address,
         phone,
         email,
@@ -64,6 +70,10 @@ export async function createTempleAction(
         avatar_emoji,
         logo_url,
         favicon_url,
+        cover_image_url,
+        facebook_url,
+        line_id,
+        instagram_url,
         created_by_auth_user_id: userId
       }
     });

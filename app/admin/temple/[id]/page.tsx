@@ -16,7 +16,12 @@ export default async function TemplePage({
     redirect('/sign-in');
   }
 
-  // Get temple data with authorization check
+  // Get current date for stats calculation
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+  // Get temple data with authorization check and include related data
   const temple = await prisma.temples.findFirst({
     where: {
       id,
@@ -26,17 +31,58 @@ export default async function TemplePage({
         },
       },
     },
+    include: {
+      // Get events
+      events: {
+        orderBy: { event_date: 'desc' },
+        take: 10,
+      },
+      // Get recent orders
+      orders: {
+        orderBy: { created_at: 'desc' },
+        take: 5,
+      },
+      // Get monthly stats
+      stats: {
+        where: {
+          date: {
+            gte: startOfMonth,
+          },
+        },
+      },
+    },
   });
 
   if (!temple) {
     redirect('/admin');
   }
 
+  // Calculate aggregated stats
+  const monthlyStats = {
+    views: temple.stats.reduce((sum, stat) => sum + stat.views, 0),
+    uniqueVisitors: temple.stats.reduce((sum, stat) => sum + stat.unique_visitors, 0),
+    donationsAmount: temple.stats.reduce((sum, stat) => sum + stat.donations_amount, 0),
+    ordersCount: temple.stats.reduce((sum, stat) => sum + stat.orders_count, 0),
+  };
+
+  // Get event registrations count
+  const eventRegistrations = temple.events.reduce(
+    (sum, event) => sum + event.current_registrations,
+    0
+  );
+
+  // Prepare temple data with stats
+  const templeWithStats = {
+    ...temple,
+    monthlyStats,
+    eventRegistrations,
+  };
+
   return (
     <div className="min-h-screen bg-stone-50">
       <Navigation />
       <div className="pt-14">
-        <TempleManagement temple={temple} />
+        <TempleManagement temple={templeWithStats} />
       </div>
     </div>
   );

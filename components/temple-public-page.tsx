@@ -95,10 +95,34 @@ const LineIcon = (props: React.SVGProps<SVGSVGElement>) => (
 // Temple Public Page - Responsive Design
 // =============================================
 
+type EventData = {
+  id: string;
+  title: string;
+  description?: string | null;
+  image_url?: string | null;
+  event_date: Date | string;
+  event_time: string;
+  location: string;
+  max_capacity?: number | null;
+  current_registrations: number;
+  registration_deadline?: Date | string | null;
+};
+
+type ServiceData = {
+  id: string;
+  icon: string;
+  name: string;
+  description?: string | null;
+  price: number;
+  unit: string;
+  is_popular: boolean;
+};
+
 type TempleData = {
   name: string;
   slug: string;
   intro?: string | null;
+  full_description?: string | null;
   address?: string | null;
   phone?: string | null;
   hours?: string | null;
@@ -107,9 +131,12 @@ type TempleData = {
   logo_url?: string | null;
   favicon_url?: string | null;
   cover_image_url?: string | null;
+  gallery_photos?: string[] | null;
   facebook_url?: string | null;
   line_id?: string | null;
   instagram_url?: string | null;
+  events?: EventData[];
+  services?: ServiceData[];
 };
 
 export function TemplePublicPage({ temple }: { temple: TempleData }) {
@@ -123,21 +150,51 @@ export function TemplePublicPage({ temple }: { temple: TempleData }) {
     avatar: temple.avatar_emoji || TEMPLE_DEFAULTS.avatar,
     coverImage: temple.cover_image_url || TEMPLE_DEFAULTS.coverImage,
     email: temple.email || `contact@${temple.slug}.temple.tw`,
-    hours: TEMPLE_DEFAULTS.hours,
+    hours: temple.hours || TEMPLE_DEFAULTS.hours,
     social: {
-      facebook: "#",
-      line: "#",
-      instagram: "#",
+      facebook: temple.facebook_url || "#",
+      line: temple.line_id || "#",
+      instagram: temple.instagram_url || "#",
     },
-    fullDescription: temple.intro
-      ? `${temple.intro} 本宮秉持「慈悲濟世、普渡眾生」之精神，致力於弘揚傳統文化，服務地方信眾。廟內供奉玉皇大帝、觀世音菩薩、關聖帝君等諸神，建築莊嚴肅穆，雕樑畫棟，充分展現台灣傳統廟宇之美。`
-      : "本宮秉持「慈悲濟世、普渡眾生」之精神，致力於弘揚傳統文化，服務地方信眾。廟內供奉玉皇大帝、觀世音菩薩、關聖帝君等諸神，建築莊嚴肅穆，雕樑畫棟，充分展現台灣傳統廟宇之美。",
+    fullDescription: temple.full_description || temple.intro ||
+      "本宮秉持「慈悲濟世、普渡眾生」之精神，致力於弘揚傳統文化，服務地方信眾。廟內供奉玉皇大帝、觀世音菩薩、關聖帝君等諸神，建築莊嚴肅穆，雕樑畫棟，充分展現台灣傳統廟宇之美。",
   };
 
-  // Use constants for mock data
-  const events = MOCK_EVENTS;
+  // Format events data from database
+  const formatEventDate = (date: Date | string) => {
+    const d = new Date(date);
+    return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  const events = temple.events && temple.events.length > 0
+    ? temple.events.map(event => ({
+        id: event.id,
+        title: event.title,
+        date: formatEventDate(event.event_date),
+        time: event.event_time,
+        location: event.location,
+        desc: event.description || '歡迎參加',
+        image: event.image_url,
+        registrationRequired: event.max_capacity !== null,
+        registrationLimit: event.max_capacity || 0,
+        currentRegistrations: event.current_registrations,
+        registrationDeadline: event.registration_deadline
+      }))
+    : MOCK_EVENTS;
+
+  // Use mock services for now (as requested)
   const services = MOCK_SERVICES;
-  const gallery = MOCK_GALLERY;
+
+  // Use real gallery photos if available, otherwise use mock
+  const gallery = temple.gallery_photos && temple.gallery_photos.length > 0
+    ? temple.gallery_photos.map((url, index) => ({
+        id: index + 1,
+        url,
+        caption: `寺廟照片 ${index + 1}`,
+        category: 'temple'
+      }))
+    : MOCK_GALLERY;
+
   const navItems = NAV_ITEMS;
 
   return (
@@ -589,22 +646,39 @@ const MobileAbout = ({ temple, gallery }: any) => {
       <section className="px-4 mt-6">
         <h2 className="text-lg font-bold text-stone-800 mb-3">追蹤我們</h2>
         <div className="flex justify-center gap-4">
-          {[
-            { icon: FacebookIcon, label: "Facebook", color: "bg-blue-600 hover:bg-blue-700" },
-            { icon: LineIcon, label: "LINE", color: "bg-green-500 hover:bg-green-600" },
-            { icon: InstagramIcon, label: "Instagram", color: "bg-gradient-to-br from-purple-600 via-pink-600 to-orange-600 hover:opacity-90" },
-          ].map((social, i) => {
-            const Icon = social.icon;
-            return (
-              <button
-                key={i}
-                className={`w-12 h-12 ${social.color} text-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110`}
-                aria-label={social.label}
-              >
-                <Icon className="h-6 w-6" />
-              </button>
-            );
-          })}
+          {temple.facebook_url && (
+            <a
+              href={temple.facebook_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+              aria-label="Facebook"
+            >
+              <FacebookIcon className="h-6 w-6" />
+            </a>
+          )}
+          {temple.line_id && (
+            <a
+              href={`https://line.me/R/ti/p/${temple.line_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-12 h-12 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+              aria-label="LINE"
+            >
+              <LineIcon className="h-6 w-6" />
+            </a>
+          )}
+          {temple.instagram_url && (
+            <a
+              href={temple.instagram_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-12 h-12 bg-gradient-to-br from-purple-600 via-pink-600 to-orange-600 hover:opacity-90 text-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+              aria-label="Instagram"
+            >
+              <InstagramIcon className="h-6 w-6" />
+            </a>
+          )}
         </div>
       </section>
 
@@ -965,34 +1039,39 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100">
               <h3 className="font-bold text-stone-800 mb-4">追蹤我們</h3>
               <div className="space-y-2">
-                {[
-                  {
-                    icon: FacebookIcon,
-                    label: "Facebook 粉絲專頁",
-                    color: "hover:bg-blue-50 hover:text-blue-600",
-                  },
-                  {
-                    icon: LineIcon,
-                    label: "LINE 官方帳號",
-                    color: "hover:bg-green-50 hover:text-green-600",
-                  },
-                  {
-                    icon: InstagramIcon,
-                    label: "Instagram",
-                    color: "hover:bg-pink-50 hover:text-pink-600",
-                  },
-                ].map((social, i) => {
-                  const Icon = social.icon;
-                  return (
-                    <button
-                      key={i}
-                      className={`w-full py-3 px-4 rounded-xl font-medium flex items-center gap-3 border border-stone-200 text-stone-700 transition-colors ${social.color}`}
-                    >
-                      <Icon className="h-5 w-5" />
-                      <span>{social.label}</span>
-                    </button>
-                  );
-                })}
+                {temple.facebook_url && (
+                  <a
+                    href={temple.facebook_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3 px-4 rounded-xl font-medium flex items-center gap-3 border border-stone-200 text-stone-700 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                  >
+                    <FacebookIcon className="h-5 w-5" />
+                    <span>Facebook 粉絲專頁</span>
+                  </a>
+                )}
+                {temple.line_id && (
+                  <a
+                    href={`https://line.me/R/ti/p/${temple.line_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3 px-4 rounded-xl font-medium flex items-center gap-3 border border-stone-200 text-stone-700 transition-colors hover:bg-green-50 hover:text-green-600"
+                  >
+                    <LineIcon className="h-5 w-5" />
+                    <span>LINE 官方帳號</span>
+                  </a>
+                )}
+                {temple.instagram_url && (
+                  <a
+                    href={temple.instagram_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3 px-4 rounded-xl font-medium flex items-center gap-3 border border-stone-200 text-stone-700 transition-colors hover:bg-pink-50 hover:text-pink-600"
+                  >
+                    <InstagramIcon className="h-5 w-5" />
+                    <span>Instagram</span>
+                  </a>
+                )}
               </div>
             </div>
           </div>
@@ -1320,14 +1399,36 @@ const DesktopAbout = ({ temple, gallery }: any) => {
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100">
             <h3 className="font-bold text-stone-800 mb-4">追蹤我們</h3>
             <div className="flex gap-3">
-              {[FacebookIcon, LineIcon, InstagramIcon].map((Icon, i) => (
-                <button
-                  key={i}
+              {temple.facebook_url && (
+                <a
+                  href={temple.facebook_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex-1 py-3 border border-stone-200 rounded-xl hover:bg-stone-50 transition-colors flex items-center justify-center"
                 >
-                  <Icon className="h-6 w-6" />
-                </button>
-              ))}
+                  <FacebookIcon className="h-6 w-6" />
+                </a>
+              )}
+              {temple.line_id && (
+                <a
+                  href={`https://line.me/R/ti/p/${temple.line_id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 py-3 border border-stone-200 rounded-xl hover:bg-stone-50 transition-colors flex items-center justify-center"
+                >
+                  <LineIcon className="h-6 w-6" />
+                </a>
+              )}
+              {temple.instagram_url && (
+                <a
+                  href={temple.instagram_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 py-3 border border-stone-200 rounded-xl hover:bg-stone-50 transition-colors flex items-center justify-center"
+                >
+                  <InstagramIcon className="h-6 w-6" />
+                </a>
+              )}
             </div>
           </div>
         </div>

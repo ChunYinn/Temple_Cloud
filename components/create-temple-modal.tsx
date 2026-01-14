@@ -34,9 +34,16 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
   const [formValues, setFormValues] = useState({
     name: '',
     slug: '',
+    intro: '',
+    full_description: '',
     address: '',
     phone: '',
-    hours: '06:00 - 21:00',
+    email: '',
+    hours: '每日 06:00 - 21:00',
+    cover_image_url: '',
+    facebook_url: '',
+    line_id: '',
+    instagram_url: '',
   });
 
   // Check if required fields are filled for each step
@@ -49,9 +56,11 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
       if (formValues.slug && !/^[a-z0-9-]+$/.test(formValues.slug)) {
         errors.push('網址名稱只能包含小寫英文、數字和連字符');
       }
+      if (!formValues.intro.trim()) errors.push('請輸入寺廟簡介');
     } else if (step === 2) {
       if (!formValues.address.trim()) errors.push('請輸入地址');
       if (!formValues.phone.trim()) errors.push('請輸入電話');
+      if (!formValues.email.trim()) errors.push('請輸入電子信箱');
       if (!formValues.hours.trim()) errors.push('請設定開放時間');
     }
 
@@ -323,14 +332,52 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
 
                 {/* Intro */}
                 <div>
-                  <Label htmlFor="intro" className="text-sm font-medium">寺廟簡介</Label>
+                  <Label htmlFor="intro" className="text-sm font-medium">
+                    寺廟簡介 <span className="text-red-500">*</span>
+                  </Label>
                   <Textarea
                     id="intro"
                     name="intro"
                     placeholder="簡短介紹您的寺廟，將顯示在公開頁面"
                     rows={3}
                     className="mt-1.5 w-full resize-none"
+                    value={formValues.intro}
+                    onChange={(e) => handleInputChange('intro', e.target.value)}
+                    required
                   />
+                </div>
+
+                {/* Full Description */}
+                <div>
+                  <Label htmlFor="full_description" className="text-sm font-medium">
+                    詳細介紹
+                  </Label>
+                  <Textarea
+                    id="full_description"
+                    name="full_description"
+                    placeholder="寺廟的歷史、文化、特色等詳細說明（選填）"
+                    rows={4}
+                    className="mt-1.5 w-full resize-none"
+                    value={formValues.full_description}
+                    onChange={(e) => handleInputChange('full_description', e.target.value)}
+                  />
+                </div>
+
+                {/* Cover Image URL */}
+                <div>
+                  <Label htmlFor="cover_image_url" className="text-sm font-medium">
+                    封面圖片網址
+                  </Label>
+                  <Input
+                    id="cover_image_url"
+                    name="cover_image_url"
+                    type="url"
+                    placeholder="https://example.com/temple-cover.jpg"
+                    className="mt-1.5 w-full"
+                    value={formValues.cover_image_url}
+                    onChange={(e) => handleInputChange('cover_image_url', e.target.value)}
+                  />
+                  <p className="text-xs text-stone-500 mt-1">可稍後在設定中上傳</p>
                 </div>
               </div>
             )}
@@ -373,7 +420,7 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
                   </div>
                   <div>
                     <Label htmlFor="email" className="text-sm font-medium">
-                      <span className="mr-1">📧</span> 電子信箱
+                      <span className="mr-1">📧</span> 電子信箱 <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id="email"
@@ -381,6 +428,9 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
                       type="email"
                       placeholder="temple@example.com"
                       className="mt-1.5"
+                      value={formValues.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      required
                     />
                   </div>
                 </div>
@@ -398,6 +448,47 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
                     />
                   </div>
                   <input type="hidden" name="hours" value={hours} />
+                </div>
+
+                {/* Social Media Links - Optional */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">社群連結（選填）</Label>
+
+                  <div>
+                    <Input
+                      id="facebook_url"
+                      name="facebook_url"
+                      type="url"
+                      placeholder="Facebook 粉絲專頁網址"
+                      className="w-full"
+                      value={formValues.facebook_url}
+                      onChange={(e) => handleInputChange('facebook_url', e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <Input
+                      id="line_id"
+                      name="line_id"
+                      type="text"
+                      placeholder="LINE 官方帳號 ID (例：@temple)"
+                      className="w-full"
+                      value={formValues.line_id}
+                      onChange={(e) => handleInputChange('line_id', e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <Input
+                      id="instagram_url"
+                      name="instagram_url"
+                      type="url"
+                      placeholder="Instagram 網址"
+                      className="w-full"
+                      value={formValues.instagram_url}
+                      onChange={(e) => handleInputChange('instagram_url', e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
             )}

@@ -2,21 +2,112 @@
 
 import { motion } from 'framer-motion';
 
-export function TempleStatsDashboard({ temple }: { temple: any }) {
+interface TempleWithStats {
+  id: string;
+  name: string;
+  monthlyStats?: {
+    views: number;
+    uniqueVisitors: number;
+    donationsAmount: number;
+    ordersCount: number;
+  };
+  eventRegistrations?: number;
+  orders?: Array<{
+    id: string;
+    order_type: string;
+    customer_name: string;
+    amount: number;
+    created_at: Date | string;
+    status: string;
+  }>;
+}
+
+export function TempleStatsDashboard({ temple }: { temple: TempleWithStats }) {
+  // Format numbers with comma separator
+  const formatNumber = (num: number) => {
+    return num.toLocaleString('zh-TW');
+  };
+
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return `NT$ ${formatNumber(amount)}`;
+  };
+
+  // Format date relative to now
+  const formatRelativeDate = (date: Date | string) => {
+    const d = new Date(date);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
+    if (diffMinutes < 60) {
+      return `${diffMinutes} 分鐘前`;
+    } else if (diffHours < 24) {
+      return `${diffHours} 小時前`;
+    } else if (diffDays === 0) {
+      return `今天 ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+    } else if (diffDays === 1) {
+      return `昨天 ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+    } else if (diffDays < 7) {
+      return `${diffDays} 天前`;
+    } else {
+      return d.toLocaleDateString('zh-TW');
+    }
+  };
+
+  // Use real data if available, otherwise fallback to defaults
   const stats = [
-    { label: '本月瀏覽', value: '1,234', change: '+12%', icon: '👁️', color: 'from-blue-500 to-blue-600' },
-    { label: '本月收款', value: 'NT$ 45,600', change: '+8%', icon: '💰', color: 'from-amber-500 to-amber-600' },
-    { label: '服務訂單', value: '23', change: '+5', icon: '🪔', color: 'from-red-500 to-red-600' },
-    { label: '活動報名', value: '156', change: '+32', icon: '📅', color: 'from-emerald-500 to-emerald-600' },
+    {
+      label: '本月瀏覽',
+      value: formatNumber(temple.monthlyStats?.views || 0),
+      change: '+12%',
+      icon: '👁️',
+      color: 'from-blue-500 to-blue-600'
+    },
+    {
+      label: '本月收款',
+      value: formatCurrency(temple.monthlyStats?.donationsAmount || 0),
+      change: '+8%',
+      icon: '💰',
+      color: 'from-amber-500 to-amber-600'
+    },
+    {
+      label: '服務訂單',
+      value: formatNumber(temple.monthlyStats?.ordersCount || 0),
+      change: '+5',
+      icon: '🪔',
+      color: 'from-red-500 to-red-600'
+    },
+    {
+      label: '活動報名',
+      value: formatNumber(temple.eventRegistrations || 0),
+      change: '+32',
+      icon: '📅',
+      color: 'from-emerald-500 to-emerald-600'
+    },
   ];
 
-  const recentOrders = [
-    { id: 1, type: '光明燈', name: '王大明', amount: 500, date: '今天 14:30', status: 'pending' },
-    { id: 2, type: '香油錢', name: '林小華', amount: 1000, date: '今天 12:15', status: 'completed' },
-    { id: 3, type: '太歲燈', name: '陳美玲', amount: 800, date: '昨天 18:40', status: 'completed' },
-    { id: 4, type: '法會報名', name: '張志明', amount: 500, date: '昨天 10:20', status: 'completed' },
-    { id: 5, type: '平安符', name: '黃雅婷', amount: 100, date: '前天 09:15', status: 'completed' },
-  ];
+  // Use real orders if available, otherwise use mock
+  const recentOrders = temple.orders && temple.orders.length > 0
+    ? temple.orders.map(order => ({
+        id: order.id,
+        type: order.order_type === 'service' ? '祈福服務' :
+              order.order_type === 'donation' ? '香油錢' :
+              order.order_type === 'event' ? '活動報名' : order.order_type,
+        name: order.customer_name,
+        amount: order.amount,
+        date: formatRelativeDate(order.created_at),
+        status: order.status,
+      }))
+    : [
+        { id: '1', type: '光明燈', name: '王大明', amount: 500, date: '今天 14:30', status: 'pending' },
+        { id: '2', type: '香油錢', name: '林小華', amount: 1000, date: '今天 12:15', status: 'completed' },
+        { id: '3', type: '太歲燈', name: '陳美玲', amount: 800, date: '昨天 18:40', status: 'completed' },
+        { id: '4', type: '法會報名', name: '張志明', amount: 500, date: '昨天 10:20', status: 'completed' },
+        { id: '5', type: '平安符', name: '黃雅婷', amount: 100, date: '前天 09:15', status: 'completed' },
+      ];
 
   const getOrderIcon = (type: string) => {
     switch(type) {
