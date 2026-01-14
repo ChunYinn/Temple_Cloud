@@ -20,16 +20,9 @@ export default async function TemplePage({
   const temple = await prisma.temples.findFirst({
     where: {
       id,
-      member: {
+      members: {
         some: {
-          user_id: userId,
-        },
-      },
-    },
-    include: {
-      page: {
-        include: {
-          blocks: true,
+          auth_user_id: userId,
         },
       },
     },

@@ -60,7 +60,7 @@ export const SOCIAL_ICONS = {
   }
 } as const;
 
-// Mock Events Data
+// Mock Events Data with enhanced fields
 export const MOCK_EVENTS = [
   {
     id: 1,
@@ -69,7 +69,23 @@ export const MOCK_EVENTS = [
     time: '09:00',
     location: '大雄寶殿',
     desc: '恭祝觀世音菩薩聖誕，誦經祈福，消災延壽。',
-    image: 'https://images.unsplash.com/photo-1547981609-4b6bfe67ca0b?w=600&h=400&fit=crop'
+    fullDescription: `
+      <h3>法會流程</h3>
+      <ul>
+        <li>08:30 - 09:00 報到</li>
+        <li>09:00 - 10:00 誦經祈福</li>
+        <li>10:00 - 11:00 觀音菩薩開示</li>
+        <li>11:00 - 11:30 點燈儀式</li>
+        <li>11:30 - 12:00 午齋</li>
+      </ul>
+      <h3>注意事項</h3>
+      <p>請穿著端莊，攜帶供品。歡迎隨喜贊助香油錢。</p>
+    `,
+    image: 'https://images.unsplash.com/photo-1547981609-4b6bfe67ca0b?w=600&h=400&fit=crop',
+    registrationRequired: true,
+    registrationLimit: 200,
+    currentRegistrations: 156,
+    status: 'published'
   },
   {
     id: 2,
@@ -78,7 +94,21 @@ export const MOCK_EVENTS = [
     time: '08:00',
     location: '大雄寶殿',
     desc: '清明慎終追遠，超薦先人，功德迴向。',
-    image: 'https://images.unsplash.com/photo-1574236170878-f66e35f83207?w=600&h=400&fit=crop'
+    fullDescription: `
+      <h3>法會內容</h3>
+      <p>清明時節，慎終追遠。本寺特舉辦超薦法會，為先人誦經祈福，功德迴向。</p>
+      <h3>超薦項目</h3>
+      <ul>
+        <li>祖先牌位登記</li>
+        <li>地藏經誦讀</li>
+        <li>焰口施食</li>
+      </ul>
+    `,
+    image: 'https://images.unsplash.com/photo-1574236170878-f66e35f83207?w=600&h=400&fit=crop',
+    registrationRequired: true,
+    registrationLimit: 150,
+    currentRegistrations: 89,
+    status: 'published'
   },
   {
     id: 3,
@@ -87,7 +117,36 @@ export const MOCK_EVENTS = [
     time: '06:00',
     location: '廟埕集合',
     desc: '恭迎媽祖聖駕出巡，祈求國泰民安。',
-    image: 'https://images.unsplash.com/photo-1548013146-72479768bada?w=600&h=400&fit=crop'
+    fullDescription: `
+      <h3>遶境路線</h3>
+      <p>從本宮出發，經過市區主要街道，全程約8公里。</p>
+      <h3>參與方式</h3>
+      <ul>
+        <li>05:30 開始集合</li>
+        <li>06:00 起駕出發</li>
+        <li>12:00 回鑾安座</li>
+      </ul>
+      <p><strong>歡迎信眾隨香參拜，共沐神恩。</strong></p>
+    `,
+    image: 'https://images.unsplash.com/photo-1548013146-72479768bada?w=600&h=400&fit=crop',
+    registrationRequired: false,
+    registrationLimit: null,
+    currentRegistrations: 0,
+    status: 'published'
+  },
+  {
+    id: 4,
+    title: '中元普渡法會',
+    date: '2024/08/15',
+    time: '14:00',
+    location: '廣場',
+    desc: '普渡眾生，超薦亡靈，積累功德。',
+    fullDescription: '',
+    image: null,
+    registrationRequired: true,
+    registrationLimit: 100,
+    currentRegistrations: 45,
+    status: 'published'
   }
 ] as const;
 

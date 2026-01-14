@@ -24,8 +24,6 @@ type Temple = {
   created_at: string;
 };
 
-type View = 'dashboard' | 'temple';
-type TabType = 'stats' | 'services' | 'events' | 'orders' | 'settings';
 
 // =============================================
 // Main Admin Component
@@ -37,21 +35,11 @@ export function AdminDashboardV2({
   tenants: Temple[];
   userName?: string;
 }) {
-  const [currentView, setCurrentView] = useState<View>('dashboard');
-  const [selectedTemple, setSelectedTemple] = useState<Temple | null>(null);
-  const [activeTab, setActiveTab] = useState<TabType>('stats');
   const router = useRouter();
 
   const handleSelectTemple = (temple: Temple) => {
-    setSelectedTemple(temple);
-    setCurrentView('temple');
-    setActiveTab('stats');
-  };
-
-  const handleBack = () => {
-    setSelectedTemple(null);
-    setCurrentView('dashboard');
-    setActiveTab('stats');
+    // Navigate to the temple management page
+    router.push(`/admin/temple/${temple.id}`);
   };
 
   return (
@@ -100,20 +88,11 @@ export function AdminDashboardV2({
         </div>
       </header>
 
-      {currentView === 'dashboard' && (
-        <Dashboard
-          tenants={tenants}
-          userName={userName}
-          onSelectTemple={handleSelectTemple}
-        />
-      )}
-      {currentView === 'temple' && selectedTemple && (
-        <TempleAdmin
-          temple={selectedTemple}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-        />
-      )}
+      <Dashboard
+        tenants={tenants}
+        userName={userName}
+        onSelectTemple={handleSelectTemple}
+      />
     </div>
   );
 }

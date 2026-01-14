@@ -307,7 +307,16 @@ export function TemplePublicPage({ temple }: { temple: TempleData }) {
 // MOBILE COMPONENTS
 // =============================================
 
-const MobileHome = ({ temple, events, services }: any) => (
+const MobileHome = ({ temple, events, services }: any) => {
+  const [copiedAddress, setCopiedAddress] = useState(false);
+
+  const handleCopyAddress = (address: string) => {
+    navigator.clipboard.writeText(address);
+    setCopiedAddress(true);
+    setTimeout(() => setCopiedAddress(false), 2000);
+  };
+
+  return (
   <div>
     {/* Hero Cover */}
     <div className={`relative ${IMAGE_SIZES.hero.mobile}`}>
@@ -382,9 +391,21 @@ const MobileHome = ({ temple, events, services }: any) => (
                 {event.title}
               </h3>
               <p className="text-stone-500 text-sm">{event.time} 開始</p>
+              {event.registrationRequired && event.registrationLimit && (
+                <p className="text-stone-400 text-xs mt-0.5">
+                  {event.currentRegistrations}/{event.registrationLimit} 名額
+                </p>
+              )}
             </div>
-            <button className="px-3 py-1.5 bg-red-50 text-red-700 rounded-lg text-sm font-medium">
-              報名
+            <button
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                event.currentRegistrations >= event.registrationLimit
+                  ? 'bg-stone-100 text-stone-400'
+                  : 'bg-red-50 text-red-700'
+              }`}
+              disabled={event.registrationRequired && event.currentRegistrations >= event.registrationLimit}
+            >
+              {event.currentRegistrations >= event.registrationLimit ? '已滿' : '報名'}
             </button>
           </motion.div>
         ))}
@@ -420,23 +441,51 @@ const MobileHome = ({ temple, events, services }: any) => (
     <section className="mt-8 px-4 pb-8">
       <h2 className="text-lg font-bold text-stone-800 mb-4">參拜資訊</h2>
       <div className="bg-white rounded-xl shadow-sm border border-stone-100 divide-y divide-stone-100">
-        {[
-          { icon: "📍", label: "地址", value: temple.address || "台灣" },
-          { icon: "⏰", label: "開放時間", value: temple.hours },
-          { icon: "📞", label: "聯絡電話", value: temple.phone || "待更新" },
-        ].map((item, i) => (
-          <div key={i} className="p-4 flex items-center gap-3">
-            <span className="text-xl">{item.icon}</span>
-            <div>
-              <p className="text-xs text-stone-400">{item.label}</p>
-              <p className="text-stone-700">{item.value}</p>
+        {/* Address with Copy button */}
+        <div className="p-4 flex items-center gap-3">
+          <span className="text-xl">📍</span>
+          <div className="flex-1">
+            <p className="text-xs text-stone-400 mb-1">地址</p>
+            <div className="flex items-start gap-2">
+              <p className="text-stone-700 flex-1">{temple.address || "台灣"}</p>
+              {temple.address && (
+                <button
+                  onClick={() => handleCopyAddress(temple.address!)}
+                  className="text-xs text-stone-500 hover:text-stone-700 flex items-center gap-1 transition-colors px-2 py-0.5 border border-stone-200 rounded-md hover:bg-stone-50"
+                >
+                  {copiedAddress ? (
+                    <><Check className="w-3 h-3" />已複製</>
+                  ) : (
+                    <><Copy className="w-3 h-3" />複製</>
+                  )}
+                </button>
+              )}
             </div>
           </div>
-        ))}
+        </div>
+
+        {/* Opening Hours */}
+        <div className="p-4 flex items-center gap-3">
+          <span className="text-xl">⏰</span>
+          <div>
+            <p className="text-xs text-stone-400">開放時間</p>
+            <p className="text-stone-700">{temple.hours}</p>
+          </div>
+        </div>
+
+        {/* Phone */}
+        <div className="p-4 flex items-center gap-3">
+          <span className="text-xl">📞</span>
+          <div>
+            <p className="text-xs text-stone-400">聯絡電話</p>
+            <p className="text-stone-700">{temple.phone || "待更新"}</p>
+          </div>
+        </div>
       </div>
     </section>
   </div>
-);
+  );
+};
 
 const MobileServices = ({ services }: any) => (
   <div className="px-4 py-6">
@@ -559,18 +608,8 @@ const MobileAbout = ({ temple, gallery }: any) => {
         </div>
       </section>
 
-      <footer className="mt-8 text-center text-stone-400 text-sm">
-        <p>
-          {BRAND.copyright(currentYear)} Powered by{" "}
-          <a
-            className="text-stone-500 hover:text-stone-700 underline-offset-2 hover:underline"
-            href={BRAND.url}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {BRAND.name}
-          </a>
-        </p>
+      <footer className="mt-8 pb-4 text-center text-stone-400 text-xs">
+        <p>© {currentYear} {BRAND.name}</p>
       </footer>
     </div>
   );
@@ -582,6 +621,13 @@ const MobileAbout = ({ temple, gallery }: any) => {
 
 const DesktopHome = ({ temple, events, services, gallery }: any) => {
   const currentYear = new Date().getFullYear();
+  const [copiedAddress, setCopiedAddress] = useState(false);
+
+  const handleCopyAddress = (address: string) => {
+    navigator.clipboard.writeText(address);
+    setCopiedAddress(true);
+    setTimeout(() => setCopiedAddress(false), 2000);
+  };
 
   return (
     <div>
@@ -723,11 +769,31 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
                           </p>
                         </div>
                       </div>
-                      <p className="text-stone-600 text-sm mb-4">
+                      <p className="text-stone-600 text-sm mb-3">
                         {event.desc}
                       </p>
-                      <button className="w-full py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors">
-                        立即報名
+                      {event.registrationRequired && event.registrationLimit && (
+                        <div className="flex items-center justify-between text-sm mb-3">
+                          <span className="text-stone-500">
+                            👥 {event.currentRegistrations}/{event.registrationLimit} 名額
+                          </span>
+                          {event.currentRegistrations >= event.registrationLimit && (
+                            <span className="text-red-600 font-medium">已額滿</span>
+                          )}
+                        </div>
+                      )}
+                      <button
+                        className={`w-full py-2.5 rounded-xl font-medium transition-colors ${
+                          event.currentRegistrations >= event.registrationLimit
+                            ? 'bg-stone-400 text-white cursor-not-allowed'
+                            : 'bg-red-600 text-white hover:bg-red-700'
+                        }`}
+                        disabled={event.registrationRequired && event.currentRegistrations >= event.registrationLimit}
+                      >
+                        {event.registrationRequired
+                          ? (event.currentRegistrations >= event.registrationLimit ? '已額滿' : '立即報名')
+                          : '查看詳情'
+                        }
                       </button>
                     </div>
                   </motion.div>
@@ -844,7 +910,21 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-stone-600 mb-1">地址</p>
-                    <p className="text-base text-stone-900 break-words">{temple.address || "台灣"}</p>
+                    <div className="flex items-start gap-2">
+                      <p className="text-base text-stone-900 break-words flex-1">{temple.address || "台灣"}</p>
+                      {temple.address && (
+                        <button
+                          onClick={() => handleCopyAddress(temple.address!)}
+                          className="text-xs text-stone-500 hover:text-stone-700 flex items-center gap-1 transition-colors px-2 py-1 border border-stone-200 rounded-md hover:bg-stone-50"
+                        >
+                          {copiedAddress ? (
+                            <><Check className="w-3 h-3" />已複製</>
+                          ) : (
+                            <><Copy className="w-3 h-3" />複製</>
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex gap-4">
@@ -1294,19 +1374,53 @@ const EventCard = ({ event }: any) => (
           <span className="text-sm">{event.date.split("/")[1]}月</span>
           <span className="text-2xl font-bold">{event.date.split("/")[2]}</span>
         </div>
-        <div>
+        <div className="flex-1">
           <h3 className="font-bold text-lg">{event.title}</h3>
           <p className="text-white/80 text-sm mt-0.5">
             {event.date} {event.time}
           </p>
         </div>
+        {event.registrationRequired && event.registrationLimit && (
+          <div className="text-right">
+            <p className="text-white/90 text-xs">報名人數</p>
+            <p className="text-white font-bold">
+              {event.currentRegistrations}/{event.registrationLimit}
+            </p>
+          </div>
+        )}
       </div>
     </div>
     <div className="p-4">
-      <p className="text-stone-600 text-sm mb-4">{event.desc}</p>
+      <p className="text-stone-600 text-sm mb-3">{event.desc}</p>
+      {event.registrationRequired && event.registrationLimit && (
+        <div className="mb-3">
+          <div className="w-full bg-stone-200 rounded-full h-2">
+            <div
+              className="bg-gradient-to-r from-red-500 to-red-600 h-2 rounded-full transition-all"
+              style={{ width: `${Math.min((event.currentRegistrations / event.registrationLimit) * 100, 100)}%` }}
+            />
+          </div>
+          <p className="text-xs text-stone-500 mt-1">
+            {event.currentRegistrations >= event.registrationLimit
+              ? '名額已滿'
+              : `剩餘 ${event.registrationLimit - event.currentRegistrations} 個名額`
+            }
+          </p>
+        </div>
+      )}
       <div className="flex gap-2">
-        <button className="flex-1 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors">
-          立即報名
+        <button
+          className={`flex-1 py-2.5 rounded-xl font-medium transition-colors ${
+            event.registrationRequired && event.currentRegistrations >= event.registrationLimit
+              ? 'bg-stone-400 text-white cursor-not-allowed'
+              : 'bg-red-600 text-white hover:bg-red-700'
+          }`}
+          disabled={event.registrationRequired && event.currentRegistrations >= event.registrationLimit}
+        >
+          {event.registrationRequired
+            ? (event.currentRegistrations >= event.registrationLimit ? '已額滿' : '立即報名')
+            : '自由參加'
+          }
         </button>
         <button className="px-4 py-2.5 border border-stone-300 text-stone-600 rounded-xl font-medium hover:bg-stone-50 transition-colors">
           詳情
