@@ -8,7 +8,7 @@ interface PrayerFormPageProps {
   }>;
 }
 
-export default async function PrayerFormPage({ params }: PrayerFormPageProps) {
+export default async function PrayerFormPage({ params }: Readonly<PrayerFormPageProps>) {
   const { slug } = await params;
 
   // Fetch temple data

@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { AdminDashboardV2 } from '@/components/admin-dashboard-v2';
-import { rootDomain } from '@/lib/utils';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { getUserTemples } from '@/lib/subdomains';

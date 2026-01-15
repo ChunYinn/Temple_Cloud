@@ -15,10 +15,11 @@ export function TimeRangePicker({
   onChange,
   className,
   required = false
-}: TimeRangePickerProps) {
+}: Readonly<TimeRangePickerProps>) {
   // Parse the initial value
   const parseValue = (val: string) => {
-    const match = val.match(/(\d{2}):(\d{2})\s*-\s*(\d{2}):(\d{2})/);
+    const regex = /(\d{2}):(\d{2})\s*-\s*(\d{2}):(\d{2})/;
+    const match = regex.exec(val);
     if (match) {
       return {
         openHour: match[1],

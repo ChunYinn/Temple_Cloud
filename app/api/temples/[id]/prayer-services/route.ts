@@ -96,6 +96,7 @@ export async function PUT(
     try {
       await requireTemplePermission(id, ['admin']);
     } catch (error) {
+      console.error('Permission check failed:', error);
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

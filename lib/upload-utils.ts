@@ -4,7 +4,7 @@ import sharp from 'sharp';
 import { UPLOAD_CONFIG } from './upload-validation';
 
 // Re-export for server-side use
-export { UPLOAD_CONFIG };
+export { UPLOAD_CONFIG } from './upload-validation';
 
 // R2 configuration
 const R2_CONFIG = {

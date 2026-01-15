@@ -18,7 +18,7 @@ export default function NotFound() {
       }
     } else {
       // Try to extract from hostname for direct subdomain access
-      const hostname = window.location.hostname;
+      const hostname = globalThis.location.hostname;
       if (hostname.includes(`.${rootDomain.split(':')[0]}`)) {
         const extractedSubdomain = hostname.split('.')[0];
         setSubdomain(extractedSubdomain);

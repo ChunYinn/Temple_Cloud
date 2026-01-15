@@ -1,14 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState, useActionState } from 'react';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
-import { BRAND, COLORS } from '@/lib/constants';
+import { BRAND } from '@/lib/constants';
 import { deleteTempleAction } from '@/app/actions';
 import { protocol, rootDomain } from '@/lib/utils';
-import { useActionState } from 'react';
 import { CreateTempleModal } from './create-temple-modal';
 
 // =============================================
@@ -31,10 +29,10 @@ type Temple = {
 export function AdminDashboardV2({
   tenants,
   userName = '使用者'
-}: {
+}: Readonly<{
   tenants: Temple[];
   userName?: string;
-}) {
+}>) {
   const router = useRouter();
 
   const handleSelectTemple = (temple: Temple) => {
@@ -87,10 +85,10 @@ export function AdminDashboardV2({
 function TenantsSection({
   tenants,
   onSelectTemple
-}: {
+}: Readonly<{
   tenants: Temple[];
   onSelectTemple: (temple: Temple) => void;
-}) {
+}>) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [deleteState, deleteAction, isPending] = useActionState(deleteTempleAction as any, {} as { error?: string; success?: string });
 
@@ -109,7 +107,7 @@ function TenantsSection({
             className="px-4 lg:px-5 py-2.5 rounded-xl text-sm font-medium bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 transition-all shadow-sm hover:shadow-md inline-flex items-center gap-2"
           >
             <span className="text-lg">+</span>
-            新增寺廟
+            <span>新增寺廟</span>
           </button>
         </div>
         <p className="text-stone-500">選擇要管理的寺廟，查看數據、管理內容與設定</p>
@@ -184,13 +182,13 @@ function TempleCard({
   onSelect,
   onDelete,
   isPending
-}: {
+}: Readonly<{
   temple: Temple;
   index: number;
   onSelect: (temple: Temple) => void;
   onDelete: (formData: FormData) => void;
   isPending: boolean;
-}) {
+}>) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -209,6 +207,15 @@ function TempleCard({
       <div
         className="relative p-5 lg:p-6 cursor-pointer"
         onClick={() => onSelect(temple)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onSelect(temple);
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-label={`選擇管理 ${temple.name}`}
       >
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
@@ -267,12 +274,13 @@ function TempleCard({
         <div className="flex items-center gap-3 text-xs text-stone-400">
           <span className="flex items-center gap-1">
             <span>📍</span>
-            {temple.address ?
-              temple.address.length > 10 ?
-                temple.address.substring(0, 10) + '...' :
-                temple.address
-              : '未設定'
-            }
+            {(() => {
+              if (!temple.address) return '未設定';
+              if (temple.address.length > 10) {
+                return temple.address.substring(0, 10) + '...';
+              }
+              return temple.address;
+            })()}
           </span>
           {temple.phone && (
             <span className="flex items-center gap-1">

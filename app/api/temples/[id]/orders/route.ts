@@ -166,7 +166,7 @@ export async function POST(
 
     // Generate order number
     const timestamp = Date.now().toString(36).toUpperCase();
-    const random = Math.random().toString(36).substr(2, 4).toUpperCase();
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
     const order_number = `${temple.slug.toUpperCase()}-${timestamp}${random}`;
 
     // Create order

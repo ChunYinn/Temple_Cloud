@@ -195,7 +195,7 @@ const processSocialMediaUrl = (url: string | null | undefined, type: 'facebook' 
   }
 };
 
-export function TemplePublicPage({ temple }: { temple: TempleData }) {
+export function TemplePublicPage({ temple }: { readonly temple: TempleData }) {
   const [activeTab, setActiveTab] = useState("home");
   const [activeSection, setActiveSection] = useState("home");
   const currentYear = new Date().getFullYear();
@@ -452,8 +452,8 @@ const GalleryModal: React.FC<GalleryModalProps> = ({ images, selectedIndex, onCl
       if (e.key === 'Escape') onClose();
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    globalThis.addEventListener('keydown', handleKeyDown);
+    return () => globalThis.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   return (
@@ -704,7 +704,7 @@ const MobileHome = ({ temple, events, services }: any) => {
                 <div className="flex items-start gap-2">
                   <p className="text-stone-700 flex-1">{temple.address}</p>
                   <button
-                    onClick={() => handleCopyAddress(temple.address!)}
+                    onClick={() => handleCopyAddress(temple.address)}
                     className="text-xs text-stone-500 hover:text-stone-700 flex items-center gap-1 transition-colors px-2 py-0.5 border border-stone-200 rounded-md hover:bg-stone-50"
                   >
                     {copiedAddress ? (
@@ -854,6 +854,14 @@ const MobileAbout = ({ temple, gallery }: any) => {
             <div
               key={i}
               onClick={() => setSelectedImageIndex(i)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setSelectedImageIndex(i);
+                }
+              }}
+              role="button"
+              tabIndex={0}
               className={`rounded-xl overflow-hidden cursor-pointer transition-transform hover:scale-105 ${
                 i === 0 ? "col-span-2 h-40" : "h-32"
               }`}
@@ -1249,7 +1257,7 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
                   <button
                     onClick={() => {
                       // Navigate to donation page or open modal
-                      window.location.href = `/temple/${temple.slug}/donate`;
+                      globalThis.location.href = `/temple/${temple.slug}/donate`;
                     }}
                     className="w-full py-3 bg-stone-900 text-white rounded-xl font-medium hover:bg-stone-800 transition-colors"
                   >
@@ -1276,7 +1284,7 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
                         <div className="flex items-start gap-2">
                           <p className="text-base text-stone-900 break-words flex-1">{temple.address}</p>
                           <button
-                            onClick={() => handleCopyAddress(temple.address!)}
+                            onClick={() => handleCopyAddress(temple.address)}
                             className="text-xs text-stone-500 hover:text-stone-700 flex items-center gap-1 transition-colors px-2 py-1 border border-stone-200 rounded-md hover:bg-stone-50"
                           >
                             {copiedAddress ? (
@@ -1617,7 +1625,7 @@ const DesktopAbout = ({ temple, gallery }: any) => {
                       <div className="flex items-start gap-2">
                         <p className="text-base text-stone-900 break-words flex-1">{temple.address}</p>
                         <button
-                          onClick={() => handleCopyAddress(temple.address!)}
+                          onClick={() => handleCopyAddress(temple.address)}
                           className="text-xs text-stone-500 hover:text-stone-700 flex items-center gap-1 transition-colors px-2 py-1 border border-stone-200 rounded-md hover:bg-stone-50"
                         >
                           {copiedAddress ? (

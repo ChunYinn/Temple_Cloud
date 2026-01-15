@@ -217,7 +217,7 @@ export function EventsManagement({ templeId }: { templeId: string }) {
         uploadFormData.append('type', 'event');
 
         // If editing and there's an old image, pass it for deletion
-        if (editingEvent && editingEvent.image_url) {
+        if (editingEvent?.image_url) {
           uploadFormData.append('oldImageUrl', editingEvent.image_url);
         }
 
@@ -550,10 +550,11 @@ export function EventsManagement({ templeId }: { templeId: string }) {
             <form onSubmit={handleSubmit} className="p-6">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1">
+                  <label htmlFor="event-title" className="block text-sm font-medium text-stone-700 mb-1">
                     活動名稱 <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="event-title"
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -565,10 +566,11 @@ export function EventsManagement({ templeId }: { templeId: string }) {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-stone-700 mb-1">
+                    <label htmlFor="event-date" className="block text-sm font-medium text-stone-700 mb-1">
                       日期 <span className="text-red-500">*</span>
                     </label>
                     <input
+                      id="event-date"
                       type="date"
                       value={formData.event_date}
                       onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
@@ -577,10 +579,11 @@ export function EventsManagement({ templeId }: { templeId: string }) {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-stone-700 mb-1">
+                    <label htmlFor="event-time" className="block text-sm font-medium text-stone-700 mb-1">
                       時間 <span className="text-red-500">*</span>
                     </label>
                     <input
+                      id="event-time"
                       type="time"
                       value={formData.event_time}
                       onChange={(e) => setFormData({ ...formData, event_time: e.target.value })}
@@ -591,10 +594,11 @@ export function EventsManagement({ templeId }: { templeId: string }) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1">
+                  <label htmlFor="event-location" className="block text-sm font-medium text-stone-700 mb-1">
                     地點 <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="event-location"
                     type="text"
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
@@ -610,15 +614,16 @@ export function EventsManagement({ templeId }: { templeId: string }) {
                   </label>
                   <div className="mt-1.5">
                     {!imagePreview ? (
-                      <div
+                      <button
+                        type="button"
                         onClick={() => imageInputRef.current?.click()}
-                        className="border-2 border-dashed border-stone-300 rounded-xl p-6 text-center cursor-pointer hover:border-stone-400 transition-colors"
+                        className="w-full border-2 border-dashed border-stone-300 rounded-xl p-6 text-center cursor-pointer hover:border-stone-400 transition-colors"
                       >
                         <Upload className="mx-auto h-10 w-10 text-stone-400" />
                         <p className="mt-2 text-sm text-stone-600">點擊上傳活動圖片</p>
                         <p className="text-xs text-stone-500 mt-1">建議尺寸 16:9 (1920x1080)</p>
                         <p className="text-xs text-stone-500">JPG, PNG 或 WebP (最大 5MB)</p>
-                      </div>
+                      </button>
                     ) : (
                       <div className="relative">
                         <div className="relative w-full h-48">
@@ -657,10 +662,11 @@ export function EventsManagement({ templeId }: { templeId: string }) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1">
+                  <label htmlFor="event-desc" className="block text-sm font-medium text-stone-700 mb-1">
                     活動描述
                   </label>
                   <textarea
+                    id="event-desc"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
@@ -671,10 +677,11 @@ export function EventsManagement({ templeId }: { templeId: string }) {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-stone-700 mb-1">
+                    <label htmlFor="event-capacity" className="block text-sm font-medium text-stone-700 mb-1">
                       人數限制
                     </label>
                     <input
+                      id="event-capacity"
                       type="number"
                       value={formData.max_capacity || ''}
                       onChange={(e) => setFormData({
@@ -687,10 +694,11 @@ export function EventsManagement({ templeId }: { templeId: string }) {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-stone-700 mb-1">
+                    <label htmlFor="event-deadline" className="block text-sm font-medium text-stone-700 mb-1">
                       報名截止日期
                     </label>
                     <input
+                      id="event-deadline"
                       type="date"
                       value={formData.registration_deadline}
                       onChange={(e) => setFormData({ ...formData, registration_deadline: e.target.value })}

@@ -77,5 +77,10 @@ async function setupR2Bucket() {
   }
 }
 
-// Run the setup
-setupR2Bucket().catch(console.error);
+// Run the setup with top-level await
+try {
+  await setupR2Bucket();
+} catch (error) {
+  console.error(error);
+  process.exit(1);
+}

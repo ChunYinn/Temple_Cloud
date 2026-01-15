@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createTempleAction } from '@/app/actions';
-import { rootDomain } from '@/lib/utils';
+import { rootDomain, cn } from '@/lib/utils';
 import { TimeRangePicker } from './time-range-picker';
 import { Loader2, AlertCircle, Upload, X, Crop } from 'lucide-react';
 import {
@@ -14,7 +14,6 @@ import {
   DialogOverlay,
 } from '@/components/ui/dialog';
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -22,7 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import Image from 'next/image';
 import { ImageCropModalStandalone, ASPECT_RATIOS } from './image-crop-modal-standalone';
 
-export function CreateTempleModal({ onClose }: { onClose: () => void }) {
+export function CreateTempleModal({ onClose }: Readonly<{ onClose: () => void }>) {
   // We'll handle the form submission manually now to upload the logo first
   const [createState, setCreateState] = useState<any>({});
   const [isCreating, setIsCreating] = useState(false);
@@ -307,6 +306,7 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
         onClose();
       }
     } catch (error) {
+      console.error('Error creating temple:', error);
       setCreateState({ error: '建立寺廟時發生錯誤' });
     } finally {
       setIsCreating(false);
@@ -424,9 +424,18 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
                     寺廟標誌 (也會成為網站圖標) <span className="text-red-500">*</span>
                   </Label>
                   <div className="mt-1.5">
-                    {!logoPreview ? (
+                    {logoPreview === null ? (
                       <div
                         onClick={() => fileInputRef.current?.click()}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            fileInputRef.current?.click();
+                          }
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        aria-label="點擊上傳寺廟標誌"
                         className="border-2 border-dashed border-stone-300 rounded-lg p-6 text-center cursor-pointer hover:border-stone-400 transition-colors"
                       >
                         <Upload className="mx-auto h-10 w-10 text-stone-400" />
@@ -474,9 +483,18 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
                 <div>
                   <Label className="text-sm font-medium">封面圖片</Label>
                   <div className="mt-1.5">
-                    {!coverPreview ? (
+                    {coverPreview === null ? (
                       <div
                         onClick={() => coverInputRef.current?.click()}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            coverInputRef.current?.click();
+                          }
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        aria-label="點擊上傳封面圖片"
                         className="border-2 border-dashed border-stone-300 rounded-lg p-4 text-center cursor-pointer hover:border-stone-400 transition-colors"
                       >
                         <Upload className="mx-auto h-8 w-8 text-stone-400" />
@@ -679,8 +697,8 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
                   <div className="text-sm text-amber-800">
                     <p className="font-medium mb-1">請完成以下必填項目：</p>
                     <ul className="list-disc list-inside space-y-0.5">
-                      {validationErrors.map((error, index) => (
-                        <li key={index}>{error}</li>
+                      {validationErrors.map((error) => (
+                        <li key={error}>{error}</li>
                       ))}
                     </ul>
                   </div>

@@ -200,17 +200,3 @@ export interface ReviewEntry {
   amount: number;
   note?: string;
 }
-
-// ========================
-// City/District Data (for Taiwan addresses)
-// ========================
-
-export interface District {
-  name: string;
-  zip: string;
-}
-
-export interface City {
-  name: string;
-  districts: District[];
-}

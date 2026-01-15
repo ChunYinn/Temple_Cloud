@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Eye } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { rootDomain, protocol } from '@/lib/utils';
 import { EventsManagement } from '@/components/events-management';
 import { StatsDashboard } from '@/components/stats-dashboard';
@@ -12,7 +11,7 @@ import { PrayerServicesManagement } from '@/components/prayer-services-managemen
 import { OrdersManagement } from '@/components/orders-management';
 import { useToast } from '@/lib/toast-context';
 
-export function TempleManagement({ temple }: { temple: any }) {
+export function TempleManagement({ temple }: Readonly<{ temple: any }>) {
   const [activeTab, setActiveTab] = useState('stats');
   const { success, error: showError } = useToast();
 

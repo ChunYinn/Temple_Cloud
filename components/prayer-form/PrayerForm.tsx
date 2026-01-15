@@ -36,6 +36,61 @@ interface PrayerFormProps {
   templeSlug?: string;
 }
 
+// Service item component to reduce nesting
+interface ServiceItemProps {
+  serviceCode: ServiceCode;
+  service: typeof PRAYER_SERVICES[ServiceCode];
+  templeService?: { isEnabled: boolean; customPrice?: number };
+  isSelected: boolean;
+  onToggle: () => void;
+}
+
+const ServiceItem = ({ serviceCode, service, templeService, isSelected, onToggle }: ServiceItemProps) => {
+  const isEnabled = templeService?.isEnabled === true;
+  const price = templeService?.customPrice || service.unitPrice;
+
+  if (!isEnabled) return null;
+
+  return (
+    <div
+      className={cn(
+        "p-4 border rounded-lg cursor-pointer transition-all",
+        isSelected
+          ? "border-red-500 bg-red-50"
+          : "border-stone-200 hover:border-stone-300"
+      )}
+      onClick={onToggle}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onToggle();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`選擇 ${service.displayName}`}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => {}}
+              className="w-4 h-4 text-red-600 rounded"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <span className="font-medium text-stone-800">{service.displayName}</span>
+            <span className="text-sm text-stone-500">NT$ {price}</span>
+          </div>
+          <p className="mt-1 ml-6 text-sm text-stone-600">{service.shortGoal}</p>
+          <p className="mt-1 ml-6 text-xs text-stone-500">贈品：{service.giftLabel}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export function PrayerForm({ templeId: propTempleId, templeSlug: propTempleSlug }: PrayerFormProps = {}) {
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -331,53 +386,23 @@ export function PrayerForm({ templeId: propTempleId, templeSlug: propTempleSlug 
             ) : (
             /* Display pre-selected services */
             <div className="space-y-3">
-              {Object.values(ServiceCode).map(serviceCode => {
-                const service = PRAYER_SERVICES[serviceCode];
-                const templeService = templeSettings?.services?.[serviceCode];
-                // No fallback - only show if explicitly enabled
-                const isEnabled = templeService?.isEnabled === true;
-                const isSelected = formState.selectedServices.includes(serviceCode);
-                const price = templeService?.customPrice || service.unitPrice;
-
-                if (!isEnabled) return null;
-
-                return (
-                  <div
-                    key={serviceCode}
-                    className={cn(
-                      "p-4 border rounded-lg cursor-pointer transition-all",
-                      isSelected
-                        ? "border-red-500 bg-red-50"
-                        : "border-stone-200 hover:border-stone-300"
-                    )}
-                    onClick={() => {
-                      setFormState(prev => ({
-                        ...prev,
-                        selectedServices: isSelected
-                          ? prev.selectedServices.filter(s => s !== serviceCode)
-                          : [...prev.selectedServices, serviceCode]
-                      }));
-                    }}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => {}}
-                            className="w-4 h-4 text-red-600 rounded"
-                          />
-                          <span className="font-medium text-stone-800">{service.displayName}</span>
-                          <span className="text-sm text-stone-500">NT$ {price}</span>
-                        </div>
-                        <p className="mt-1 ml-6 text-sm text-stone-600">{service.shortGoal}</p>
-                        <p className="mt-1 ml-6 text-xs text-stone-500">贈品：{service.giftLabel}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {Object.values(ServiceCode).map(serviceCode => (
+                <ServiceItem
+                  key={serviceCode}
+                  serviceCode={serviceCode}
+                  service={PRAYER_SERVICES[serviceCode]}
+                  templeService={templeSettings?.services?.[serviceCode]}
+                  isSelected={formState.selectedServices.includes(serviceCode)}
+                  onToggle={() => {
+                    setFormState(prev => ({
+                      ...prev,
+                      selectedServices: prev.selectedServices.includes(serviceCode)
+                        ? prev.selectedServices.filter(s => s !== serviceCode)
+                        : [...prev.selectedServices, serviceCode]
+                    }));
+                  }}
+                />
+              ))}
 
               {/* Donation option */}
               {templeSettings?.donation?.isEnabled && (
@@ -528,7 +553,7 @@ export function PrayerForm({ templeId: propTempleId, templeSlug: propTempleSlug 
           )}
         >
           <ChevronLeft className="w-5 h-5" />
-          上一步
+          <span>上一步</span>
         </button>
 
         {currentStep < STEPS.length ? (

@@ -5,18 +5,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Upload,
   X,
-  Loader2,
   AlertCircle,
-  Crop,
   Replace,
   Images,
   ImagePlus,
-  Check,
   RotateCcw
 } from 'lucide-react';
 import Image from 'next/image';
 import { ImageCropModalStandalone as ImageCropModal, ASPECT_RATIOS } from './image-crop-modal-standalone';
-import { UPLOAD_CONFIG, validateImage } from '@/lib/upload-validation';
+import { validateImage } from '@/lib/upload-validation';
 
 interface GalleryUploadManagerProps {
   templeId: string;
@@ -38,7 +35,7 @@ export function GalleryUploadManager({
   initialImages,
   onImagesChange,
   maxImages = 6,
-}: GalleryUploadManagerProps) {
+}: Readonly<GalleryUploadManagerProps>) {
   // Current state (what user sees)
   const [currentImages, setCurrentImages] = useState<string[]>(initialImages);
   const [pendingChanges, setPendingChanges] = useState<ImageChange[]>([]);
@@ -106,10 +103,10 @@ export function GalleryUploadManager({
     // Validate all files
     files.forEach(file => {
       const validation = validateImage(file);
-      if (!validation.isValid) {
-        newErrors.push(`${file.name}: ${validation.error}`);
-      } else {
+      if (validation.isValid) {
         validFiles.push(file);
+      } else {
+        newErrors.push(`${file.name}: ${validation.error}`);
       }
     });
 
@@ -152,7 +149,6 @@ export function GalleryUploadManager({
 
     if (cropImage.index !== undefined) {
       // Replacing existing image
-      const oldUrl = currentImages[cropImage.index];
       const newChanges = [...pendingChanges];
 
       // Remove any previous change for this index
@@ -281,10 +277,10 @@ export function GalleryUploadManager({
       toAdd: pendingChanges.filter(c => c.type === 'add').map(c => ({
         file: pendingFiles.get(c.newPreview!)!
       })),
-      toRemove: pendingChanges.filter(c => c.type === 'remove').map(c => c.oldUrl!),
+      toRemove: pendingChanges.filter(c => c.type === 'remove').map(c => c.oldUrl),
       toReplace: pendingChanges.filter(c => c.type === 'replace').map(c => ({
-        index: c.index!,
-        oldUrl: c.oldUrl!,
+        index: c.index,
+        oldUrl: c.oldUrl,
         file: pendingFiles.get(c.newPreview!)!
       }))
     };
@@ -296,9 +292,9 @@ export function GalleryUploadManager({
   // Return save method for parent to use
   React.useEffect(() => {
     // Store save method on window temporarily for parent access
-    (window as any).__galleryUploadSave = saveChanges;
+    (globalThis as any).__galleryUploadSave = saveChanges;
     return () => {
-      delete (window as any).__galleryUploadSave;
+      delete (globalThis as any).__galleryUploadSave;
     };
   }, [saveChanges]);
 
@@ -361,8 +357,8 @@ export function GalleryUploadManager({
               <div className="flex-1">
                 <p className="font-medium text-red-800">錯誤</p>
                 <ul className="mt-1 text-sm text-red-700 space-y-1">
-                  {errors.map((error, i) => (
-                    <li key={i}>{error}</li>
+                  {errors.map((error) => (
+                    <li key={error}>{error}</li>
                   ))}
                 </ul>
               </div>
@@ -583,7 +579,7 @@ export function GalleryUploadManager({
           imageUrl={cropImage.tempUrl}
           aspectRatio={ASPECT_RATIOS.LANDSCAPE}
           onCropComplete={handleCropComplete}
-          title={cropImage.index !== undefined ? "替換圖片" : "裁切圖片"}
+          title={cropImage.index === undefined ? "裁切圖片" : "替換圖片"}
           minWidth={800}
           minHeight={600}
         />

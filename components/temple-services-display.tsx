@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PRAYER_SERVICES, SERVICE_ICONS, SERVICE_COLORS, DONATION_CONFIG } from '@/lib/prayer-form/services';
+import { PRAYER_SERVICES, SERVICE_ICONS, SERVICE_COLORS } from '@/lib/prayer-form/services';
 import { ServiceCode } from '@/lib/prayer-form/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +11,6 @@ import {
   ChevronDown,
   ChevronUp,
   Users,
-  Calendar,
   Gift,
   DollarSign,
   Heart,
@@ -19,7 +18,6 @@ import {
   Info,
   ArrowRight,
   Check,
-  X,
   AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -44,9 +42,9 @@ interface DonationSettings {
 }
 
 interface TempleServicesDisplayProps {
-  templeId: string;
-  templeSlug: string;
-  templeName: string;
+  readonly templeId: string;
+  readonly templeSlug: string;
+  readonly templeName: string;
 }
 
 export function TempleServicesDisplay({

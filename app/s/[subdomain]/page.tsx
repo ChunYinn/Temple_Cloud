@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTempleBySlug } from "@/lib/subdomains";
-import { rootDomain, sanitizeSlug } from "@/lib/utils";
+import { sanitizeSlug } from "@/lib/utils";
 import { TemplePublicPage } from "@/components/temple-public-page";
 
 export async function generateMetadata({
   params,
-}: {
+}: Readonly<{
   params: Promise<{ subdomain: string }>;
-}): Promise<Metadata> {
+}>): Promise<Metadata> {
   const { subdomain } = await params;
   const temple = await getTempleBySlug(sanitizeSlug(subdomain));
 
@@ -37,9 +37,9 @@ export async function generateMetadata({
 
 export default async function SubdomainPage({
   params,
-}: {
+}: Readonly<{
   params: Promise<{ subdomain: string }>;
-}) {
+}>) {
   const { subdomain } = await params;
   const temple = await getTempleBySlug(sanitizeSlug(subdomain));
 

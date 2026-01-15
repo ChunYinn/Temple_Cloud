@@ -75,7 +75,7 @@ export function validateMultipleImageFiles(
  */
 export function getFileExtension(filename: string): string {
   const parts = filename.split('.');
-  return parts[parts.length - 1].toLowerCase();
+  return parts.at(-1)?.toLowerCase() || '';
 }
 
 /**
@@ -104,7 +104,7 @@ export async function fileToBase64(file: File): Promise<string> {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result as string);
-    reader.onerror = error => reject(error);
+    reader.onerror = error => reject(new Error(`Failed to read file: ${error}`));
   });
 }
 

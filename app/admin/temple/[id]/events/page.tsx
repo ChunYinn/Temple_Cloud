@@ -17,7 +17,7 @@ import {
 
 export default function TempleEventsPage() {
   const params = useParams();
-  const templeId = params.id as string;
+  // const templeId = params.id as string; // Will be used when connecting to real API
   const [events] = useState(MOCK_EVENTS);
   const [showNewEventForm, setShowNewEventForm] = useState(false);
   const [, setEditingEvent] = useState<any>(null);

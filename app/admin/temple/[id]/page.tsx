@@ -6,9 +6,9 @@ import { prisma } from '@/lib/db';
 
 export default async function TemplePage({
   params,
-}: {
+}: Readonly<{
   params: Promise<{ id: string }>;
-}) {
+}>) {
   const { userId } = await auth();
   const { id } = await params;
 

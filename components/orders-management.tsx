@@ -3,17 +3,11 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Calendar,
-  Users,
   DollarSign,
   TrendingUp,
   Package,
   Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
   Search,
-  Filter,
   Download,
   ChevronLeft,
   ChevronRight,
@@ -51,7 +45,48 @@ interface OrderStats {
   monthGrowth: number;
 }
 
-export function OrdersManagement({ templeId }: { templeId: string }) {
+// Helper component for loading state
+const LoadingState = () => (
+  <div className="text-center py-12">
+    <div className="inline-flex items-center gap-2 text-stone-500">
+      <div className="animate-spin rounded-full h-5 w-5 border-2 border-stone-300 border-t-stone-600"></div>
+      載入中...
+    </div>
+  </div>
+);
+
+// Helper component for empty state
+const EmptyState = ({ hasFilters }: { hasFilters: boolean }) => (
+  <div className="text-center py-12">
+    <div className="inline-flex flex-col items-center">
+      <div className="w-20 h-20 rounded-full bg-stone-100 flex items-center justify-center mb-4">
+        <Package className="w-10 h-10 text-stone-400" />
+      </div>
+      <h3 className="text-lg font-medium text-stone-700 mb-1">
+        {hasFilters ? '沒有符合條件的訂單' : '尚無訂單記錄'}
+      </h3>
+      <p className="text-sm text-stone-500 max-w-sm">
+        {hasFilters
+          ? '請嘗試調整搜尋條件'
+          : '當有客戶下訂單時，訂單資訊將顯示在這裡'}
+      </p>
+    </div>
+  </div>
+);
+
+// Helper component for growth badge
+const GrowthBadge = ({ growth }: { growth: number }) => {
+  const isPositive = growth > 0;
+  return (
+    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+      isPositive ? 'bg-green-50 text-green-600' : 'bg-stone-50 text-stone-600'
+    }`}>
+      {isPositive ? '+' : ''}{growth}%
+    </span>
+  );
+};
+
+export function OrdersManagement({ templeId }: Readonly<{ templeId: string }>) {
   const [activeTab, setActiveTab] = useState<'all' | 'service' | 'event'>('all');
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
@@ -208,6 +243,7 @@ export function OrdersManagement({ templeId }: { templeId: string }) {
         fetchOrders();
       }
     } catch (error) {
+      console.error('Failed to update order status:', error);
       showError('更新失敗');
     }
   };
@@ -231,6 +267,15 @@ export function OrdersManagement({ templeId }: { templeId: string }) {
     }
   };
 
+  const getPaymentStatusText = (status: string) => {
+    switch(status) {
+      case 'paid': return '已付款';
+      case 'pending': return '待付款';
+      case 'refunded': return '已退款';
+      default: return '待付款';
+    }
+  };
+
   // Count orders by type
   const serviceOrdersCount = orders.filter(o => o.type === 'service').length;
   const eventOrdersCount = orders.filter(o => o.type === 'event').length;
@@ -251,11 +296,7 @@ export function OrdersManagement({ templeId }: { templeId: string }) {
             >
               <div className="flex items-center justify-between mb-2">
                 <Package className="w-8 h-8 text-blue-500" />
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                  stats.weekGrowth > 0 ? 'bg-green-50 text-green-600' : 'bg-stone-50 text-stone-600'
-                }`}>
-                  {stats.weekGrowth > 0 ? '+' : ''}{stats.weekGrowth}%
-                </span>
+                <GrowthBadge growth={stats.weekGrowth} />
               </div>
               <p className="text-2xl font-bold text-stone-800">{stats.totalOrders}</p>
               <p className="text-sm text-stone-500">總訂單數</p>
@@ -269,11 +310,7 @@ export function OrdersManagement({ templeId }: { templeId: string }) {
             >
               <div className="flex items-center justify-between mb-2">
                 <DollarSign className="w-8 h-8 text-green-500" />
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                  stats.monthGrowth > 0 ? 'bg-green-50 text-green-600' : 'bg-stone-50 text-stone-600'
-                }`}>
-                  {stats.monthGrowth > 0 ? '+' : ''}{stats.monthGrowth}%
-                </span>
+                <GrowthBadge growth={stats.monthGrowth} />
               </div>
               <p className="text-2xl font-bold text-stone-800">
                 NT$ {stats.totalRevenue.toLocaleString()}
@@ -407,30 +444,9 @@ export function OrdersManagement({ templeId }: { templeId: string }) {
         {/* Orders List */}
         <div className="p-4">
           {loading ? (
-            <div className="text-center py-12">
-              <div className="inline-flex items-center gap-2 text-stone-500">
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-stone-300 border-t-stone-600"></div>
-                載入中...
-              </div>
-            </div>
+            <LoadingState />
           ) : filteredOrders.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="inline-flex flex-col items-center">
-                <div className="w-20 h-20 rounded-full bg-stone-100 flex items-center justify-center mb-4">
-                  <Package className="w-10 h-10 text-stone-400" />
-                </div>
-                <h3 className="text-lg font-medium text-stone-700 mb-1">
-                  {searchTerm || statusFilter !== 'all' || dateFilter !== 'all'
-                    ? '沒有符合條件的訂單'
-                    : '尚無訂單記錄'}
-                </h3>
-                <p className="text-sm text-stone-500 max-w-sm">
-                  {searchTerm || statusFilter !== 'all' || dateFilter !== 'all'
-                    ? '請嘗試調整搜尋條件'
-                    : '當有客戶下訂單時，訂單資訊將顯示在這裡'}
-                </p>
-              </div>
-            </div>
+            <EmptyState hasFilters={searchTerm !== '' || statusFilter !== 'all' || dateFilter !== 'all'} />
           ) : (
             <>
               {/* Orders Table */}
@@ -495,8 +511,7 @@ export function OrdersManagement({ templeId }: { templeId: string }) {
                         </td>
                         <td className="py-3 px-3">
                           <span className={`text-sm font-medium ${getPaymentStatusColor(order.payment_status)}`}>
-                            {order.payment_status === 'paid' ? '已付款' :
-                             order.payment_status === 'pending' ? '待付款' : '已退款'}
+                            {getPaymentStatusText(order.payment_status)}
                           </span>
                         </td>
                         <td className="py-3 px-3">
@@ -539,7 +554,7 @@ export function OrdersManagement({ templeId }: { templeId: string }) {
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
-                    {[...Array(totalPages)].map((_, i) => (
+                    {[...new Array(totalPages)].map((_, i) => (
                       <button
                         key={i}
                         onClick={() => setCurrentPage(i + 1)}

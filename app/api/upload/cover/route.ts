@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     // Use a generated ID if templeId is not provided or is temporary
     const uploadId = templeId && !templeId.startsWith('temp-')
       ? templeId
-      : `upload-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      : `upload-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
     // Validate image
     const validation = validateImage(file);

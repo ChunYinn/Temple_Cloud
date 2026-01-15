@@ -3,7 +3,6 @@ import { Noto_Sans_TC } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { ClerkProvider } from '@clerk/nextjs';
 import { ToastProvider } from '@/lib/toast-context';
-import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 
 const notoSansTC = Noto_Sans_TC({

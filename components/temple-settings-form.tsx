@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { TimeRangePicker } from './time-range-picker';
-import { Upload, X, Crop } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
 import Image from 'next/image';
 import { FacebookIcon, InstagramIcon, LineIcon } from './social-icons';
 import { rootDomain, protocol } from '@/lib/utils';
@@ -31,8 +31,8 @@ interface Temple {
 }
 
 interface TempleSettingsFormProps {
-  temple: Temple;
-  onSave?: (data: Partial<Temple>) => Promise<void>;
+  readonly temple: Temple;
+  readonly onSave?: (data: Partial<Temple>) => Promise<void>;
 }
 
 export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) {
@@ -301,14 +301,14 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
 
   // Helper function to process gallery changes
   const processGalleryChanges = async (templeId: string): Promise<string[] | null> => {
-    if (!galleryHasChanges || !(window as any).__galleryUploadSave) {
+    if (!galleryHasChanges || !(globalThis as any).__galleryUploadSave) {
       return null;
     }
 
-    const galleryChanges = await (window as any).__galleryUploadSave();
+    const galleryChanges = await (globalThis as any).__galleryUploadSave();
 
     // Start with existing non-blob URLs
-    let uploadedUrls: string[] = [...galleryImages.filter(url => !url.startsWith('blob:'))];
+    let uploadedUrls: string[] = galleryImages.filter(url => !url.startsWith('blob:'));
 
     // Process additions
     const newUrls = await processGalleryAdditions(galleryChanges.toAdd, templeId);
@@ -329,11 +329,11 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
 
   // Helper function to cleanup deleted gallery images
   const cleanupGalleryImages = async (templeId: string): Promise<void> => {
-    if (!galleryHasChanges || !(window as any).__galleryUploadSave) {
+    if (!galleryHasChanges || !(globalThis as any).__galleryUploadSave) {
       return;
     }
 
-    const galleryChanges = await (window as any).__galleryUploadSave();
+    const galleryChanges = await (globalThis as any).__galleryUploadSave();
     const toDelete = [
       ...galleryChanges.toRemove,
       ...galleryChanges.toReplace.map((r: any) => r.oldUrl)
@@ -484,16 +484,7 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
                   寺廟標誌
                 </label>
                 <div className="mt-1.5">
-                  {!logoPreview ? (
-                    <div
-                      onClick={() => fileInputRef.current?.click()}
-                      className="border-2 border-dashed border-stone-300 rounded-xl p-6 text-center cursor-pointer hover:border-stone-400 transition-colors"
-                    >
-                      <Upload className="mx-auto h-10 w-10 text-stone-400" />
-                      <p className="mt-2 text-sm text-stone-600">點擊上傳寺廟標誌</p>
-                      <p className="text-xs text-stone-500 mt-1">JPG, PNG 或 WebP (最大 5MB)</p>
-                    </div>
-                  ) : (
+                  {logoPreview ? (
                     <div className="relative">
                       <div className="relative w-32 h-32">
                         <Image
@@ -515,6 +506,23 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
                         將自動生成網站圖標
                       </p>
                     </div>
+                  ) : (
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          fileInputRef.current?.click();
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      className="border-2 border-dashed border-stone-300 rounded-xl p-6 text-center cursor-pointer hover:border-stone-400 transition-colors"
+                    >
+                      <Upload className="mx-auto h-10 w-10 text-stone-400" />
+                      <p className="mt-2 text-sm text-stone-600">點擊上傳寺廟標誌</p>
+                      <p className="text-xs text-stone-500 mt-1">JPG, PNG 或 WebP (最大 5MB)</p>
+                    </div>
                   )}
                   <input
                     ref={fileInputRef}
@@ -532,16 +540,7 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
                   封面圖片
                 </label>
                 <div className="mt-1.5">
-                  {!coverPreview ? (
-                    <div
-                      onClick={() => coverInputRef.current?.click()}
-                      className="border-2 border-dashed border-stone-300 rounded-xl p-6 text-center cursor-pointer hover:border-stone-400 transition-colors"
-                    >
-                      <Upload className="mx-auto h-10 w-10 text-stone-400" />
-                      <p className="mt-2 text-sm text-stone-600">點擊上傳封面圖片</p>
-                      <p className="text-xs text-stone-500 mt-1">JPG, PNG 或 WebP (最大 5MB)</p>
-                    </div>
-                  ) : (
+                  {coverPreview ? (
                     <div className="relative">
                       <div className="relative w-full h-48">
                         <Image
@@ -559,6 +558,23 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
                       >
                         <X className="h-4 w-4" />
                       </button>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => coverInputRef.current?.click()}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          coverInputRef.current?.click();
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      className="border-2 border-dashed border-stone-300 rounded-xl p-6 text-center cursor-pointer hover:border-stone-400 transition-colors"
+                    >
+                      <Upload className="mx-auto h-10 w-10 text-stone-400" />
+                      <p className="mt-2 text-sm text-stone-600">點擊上傳封面圖片</p>
+                      <p className="text-xs text-stone-500 mt-1">JPG, PNG 或 WebP (最大 5MB)</p>
                     </div>
                   )}
                   <input
@@ -621,7 +637,8 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
               {/* Address */}
               <div>
                 <label className="block text-sm font-medium text-stone-700 mb-2">
-                  <span className="mr-1">📍</span> 地址
+                  <span className="mr-1">📍</span>
+                  {' '}地址
                 </label>
                 <input
                   type="text"
@@ -636,7 +653,8 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
               <div className="grid md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-sm font-medium text-stone-700 mb-2">
-                    <span className="mr-1">📞</span> 電話
+                    <span className="mr-1">📞</span>
+                    {' '}電話
                   </label>
                   <input
                     type="tel"
@@ -649,7 +667,8 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
 
                 <div>
                   <label className="block text-sm font-medium text-stone-700 mb-2">
-                    <span className="mr-1">📧</span> 電子信箱
+                    <span className="mr-1">📧</span>
+                    {' '}電子信箱
                   </label>
                   <input
                     type="email"
@@ -664,7 +683,8 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
               {/* Hours */}
               <div>
                 <label className="block text-sm font-medium text-stone-700 mb-2">
-                  <span className="mr-1">⏰</span> 開放時間
+                  <span className="mr-1">⏰</span>
+                  {' '}開放時間
                 </label>
                 <TimeRangePicker
                   value={formData.hours || '每日 06:00 - 21:00'}

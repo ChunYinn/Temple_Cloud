@@ -15,9 +15,9 @@ import {
   ShippingOption,
   DomesticAddress,
   OverseasAddress,
-  ServiceSelection,
   TransactionItem,
-  TransactionItemType
+  TransactionItemType,
+  BlessingEntry
 } from './types';
 
 // ========================
@@ -214,6 +214,95 @@ export const computeTotals = (state: PrayerFormState): ComputedTotals => {
 // Review Page Formatting
 // ========================
 
+// Helper functions for building review lines sections
+const buildApplicantSection = (applicant: PrayerFormState['applicant']): string[] => {
+  const lines: string[] = [];
+  lines.push(
+    '【申請人資料】',
+    `姓名：${applicant.name}`,
+    `手機：${applicant.mobile}`
+  );
+  if (applicant.email) {
+    lines.push(`電子郵件：${applicant.email}`);
+  }
+  lines.push('');
+  return lines;
+};
+
+const buildShippingSection = (shipping: PrayerFormState['shipping']): string[] => {
+  const lines: string[] = [];
+  if (shipping.option === 'none') return lines;
+
+  lines.push('【收件資料】');
+  if (shipping.sameAsApplicant) {
+    lines.push('同申請人資料');
+  } else {
+    lines.push(`收件人：${shipping.recipientName}`);
+    lines.push(`聯絡電話：${shipping.recipientMobile}`);
+    const address = shipping.addressType && shipping.domesticAddress
+      ? formatDomesticAddress(shipping.domesticAddress)
+      : shipping.addressType && shipping.overseasAddress
+      ? formatOverseasAddress(shipping.overseasAddress)
+      : '';
+    if (address) lines.push(`地址：${address}`);
+  }
+  lines.push('');
+  return lines;
+};
+
+const buildBlessingEntry = (entry: BlessingEntry, entryNumber: number, serviceName: string, unitPrice: number): string[] => {
+  const lines: string[] = [];
+  lines.push(
+    `${entryNumber}. 祈福姓名：${entry.name}`,
+    `   性別：${formatGender(entry.gender)}`,
+    `   生日：${formatFullBirth(entry.birth)}`,
+    `   居住地址：${formatAddress(entry.addressType, entry.domesticAddress, entry.overseasAddress)}`,
+    `   服務：${serviceName}`,
+    `   金額：${unitPrice} 元`
+  );
+  if (entry.note) {
+    lines.push(`   備註：${entry.note}`);
+  }
+  lines.push('');
+  return lines;
+};
+
+const buildDonationSection = (donation: PrayerFormState['donation'], applicantName: string): string[] => {
+  const lines: string[] = [];
+  if (donation && donation.amount > 0) {
+    lines.push(
+      '【功德金】',
+      `金額：${donation.amount} 元`
+    );
+    const donorName = donation.isAnonymous
+      ? '善心人士'
+      : donation.donorName || applicantName;
+    lines.push(`捐贈人：${donorName}`);
+    if (donation.note) {
+      lines.push(`備註：${donation.note}`);
+    }
+    lines.push('');
+  }
+  return lines;
+};
+
+const buildTotalsSection = (totals: ReturnType<typeof computeTotals>): string[] => {
+  const lines: string[] = [];
+  lines.push(
+    '【費用明細】',
+    `祈福服務費用：${totals.servicesTotal} 元`
+  );
+  if (totals.donationTotal > 0) {
+    lines.push(`功德金：${totals.donationTotal} 元`);
+  }
+  if (totals.shippingFee > 0) {
+    lines.push(`運費：${totals.shippingFee} 元`);
+  }
+  lines.push(`總計：${totals.grandTotal} 元`);
+  lines.push('');
+  return lines;
+};
+
 /**
  * Build review lines for printing/display
  */
@@ -225,81 +314,25 @@ export const buildReviewLines = (state: PrayerFormState): string[] => {
   lines.push('========== 祈福申請單 ==========');
   lines.push('');
 
-  // Applicant info
-  lines.push('【申請人資料】');
-  lines.push(`姓名：${state.applicant.name}`);
-  lines.push(`手機：${state.applicant.mobile}`);
-  if (state.applicant.email) {
-    lines.push(`電子郵件：${state.applicant.email}`);
-  }
-  lines.push('');
-
-  // Shipping info if not NONE
-  if (state.shipping.option !== 'none') {
-    lines.push('【收件資料】');
-    if (state.shipping.sameAsApplicant) {
-      lines.push('同申請人資料');
-    } else {
-      lines.push(`收件人：${state.shipping.recipientName}`);
-      lines.push(`聯絡電話：${state.shipping.recipientMobile}`);
-      if (state.shipping.addressType && state.shipping.domesticAddress) {
-        lines.push(`地址：${formatDomesticAddress(state.shipping.domesticAddress)}`);
-      } else if (state.shipping.addressType && state.shipping.overseasAddress) {
-        lines.push(`地址：${formatOverseasAddress(state.shipping.overseasAddress)}`);
-      }
-    }
-    lines.push('');
-  }
+  // Add sections
+  lines.push(...buildApplicantSection(state.applicant));
+  lines.push(...buildShippingSection(state.shipping));
 
   // Blessing entries
   lines.push('【祈福項目】');
   state.serviceSelections.forEach(selection => {
     const serviceName = getServiceDisplayName(selection.serviceCode);
-
     selection.entries.forEach(entry => {
-      lines.push(`${entryNumber}. 祈福姓名：${entry.name}`);
-      lines.push(`   性別：${formatGender(entry.gender)}`);
-      lines.push(`   生日：${formatFullBirth(entry.birth)}`);
-      lines.push(`   居住地址：${formatAddress(entry.addressType, entry.domesticAddress, entry.overseasAddress)}`);
-      lines.push(`   服務：${serviceName}`);
-      lines.push(`   金額：${selection.unitPrice} 元`);
-      if (entry.note) {
-        lines.push(`   備註：${entry.note}`);
-      }
-      lines.push('');
+      lines.push(...buildBlessingEntry(entry, entryNumber, serviceName, selection.unitPrice));
       entryNumber++;
     });
   });
 
-  // Donation if present
-  if (state.donation && state.donation.amount > 0) {
-    lines.push('【功德金】');
-    lines.push(`金額：${state.donation.amount} 元`);
-    if (!state.donation.isAnonymous) {
-      lines.push(`捐贈人：${state.donation.donorName || state.applicant.name}`);
-    } else {
-      lines.push('捐贈人：善心人士');
-    }
-    if (state.donation.note) {
-      lines.push(`備註：${state.donation.note}`);
-    }
-    lines.push('');
-  }
+  // Add donation and totals
+  lines.push(...buildDonationSection(state.donation, state.applicant.name));
+  lines.push(...buildTotalsSection(computeTotals(state)));
 
-  // Totals
-  const totals = computeTotals(state);
-  lines.push('【費用明細】');
-  lines.push(`祈福服務費用：${totals.servicesTotal} 元`);
-  if (totals.donationTotal > 0) {
-    lines.push(`功德金：${totals.donationTotal} 元`);
-  }
-  if (totals.shippingFee > 0) {
-    lines.push(`運費：${totals.shippingFee} 元`);
-  }
-  lines.push(`總計：${totals.grandTotal} 元`);
-  lines.push('');
   lines.push('========== 申請單結束 ==========');
-
   return lines;
 };
 

@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { useActionState } from 'react';
+import { useState, useActionState } from 'react';
 import Link from 'next/link';
 import { Trash2, Loader2, Plus, ExternalLink } from 'lucide-react';
 import { deleteTempleAction, createTempleAction } from '@/app/actions';
@@ -42,7 +41,7 @@ const mockStats = {
 // Temple emojis for visual representation
 const templeEmojis = ['🏛️', '🛕', '⛩️', '🕌', '⛪'];
 
-export function AdminDashboard({ tenants }: { tenants: Temple[] }) {
+export function AdminDashboard({ tenants }: Readonly<{ tenants: Temple[] }>) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [state, action, isPending] = useActionState<DeleteState, FormData>(
     deleteTempleAction,
