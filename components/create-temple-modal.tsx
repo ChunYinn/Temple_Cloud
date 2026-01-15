@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useActionState } from 'react';
 import { createTempleAction } from '@/app/actions';
 import { rootDomain } from '@/lib/utils';
 import { TimeRangePicker } from './time-range-picker';
@@ -42,9 +41,6 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
   const [showCoverCrop, setShowCoverCrop] = useState(false);
   const [tempLogoUrl, setTempLogoUrl] = useState<string | null>(null);
   const [tempCoverUrl, setTempCoverUrl] = useState<string | null>(null);
-
-  // Track if crop modal is open to conditionally render main dialog
-  const isCropModalOpen = showLogoCrop || showCoverCrop;
 
   // Form values for validation
   const [formValues, setFormValues] = useState({
@@ -623,16 +619,19 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
                   <input type="hidden" name="hours" value={hours} />
                 </div>
 
-                {/* Social Media Links - Optional */}
+                {/* Social Media Links - Recommended */}
                 <div className="space-y-3">
-                  <Label className="text-sm font-medium">社群連結（選填）</Label>
+                  <div>
+                    <Label className="text-sm font-medium">社群連結（建議填寫）</Label>
+                    <p className="text-xs text-stone-500 mt-1">增加社群連結可讓信眾更方便聯繫您的寺廟</p>
+                  </div>
 
                   <div>
                     <Input
                       id="facebook_url"
                       name="facebook_url"
                       type="url"
-                      placeholder="Facebook 粉絲專頁網址"
+                      placeholder="Facebook 粉絲專頁網址（例：https://facebook.com/yourpage）"
                       className="w-full"
                       value={formValues.facebook_url}
                       onChange={(e) => handleInputChange('facebook_url', e.target.value)}
@@ -644,7 +643,7 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
                       id="line_id"
                       name="line_id"
                       type="text"
-                      placeholder="LINE 官方帳號 ID (例：@temple)"
+                      placeholder="LINE 官方帳號 ID（例：@temple）"
                       className="w-full"
                       value={formValues.line_id}
                       onChange={(e) => handleInputChange('line_id', e.target.value)}
@@ -656,7 +655,7 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
                       id="instagram_url"
                       name="instagram_url"
                       type="url"
-                      placeholder="Instagram 網址"
+                      placeholder="Instagram 網址（例：https://instagram.com/yourpage）"
                       className="w-full"
                       value={formValues.instagram_url}
                       onChange={(e) => handleInputChange('instagram_url', e.target.value)}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { uploadGalleryPhoto } from '@/lib/upload-utils';
+import { uploadGalleryPhoto, deleteFromR2 } from '@/lib/upload-utils';
 import { validateImage, UPLOAD_CONFIG } from '@/lib/upload-validation';
 import { prisma } from '@/lib/db';
 
@@ -127,8 +127,20 @@ export async function DELETE(request: NextRequest) {
       },
     });
 
-    // Note: We're not deleting from R2 to avoid accidental data loss
-    // Could add a cleanup job later if needed
+    // Delete from R2 storage after successful DB update
+    try {
+      if (photoUrl.includes('r2.cloudflarestorage.com') || photoUrl.includes('temples-tw.com')) {
+        // Extract the key from the URL
+        const urlParts = photoUrl.split('/');
+        const key = urlParts.slice(-3).join('/'); // Usually 'temples/[id]/gallery/[filename]'
+        if (key.startsWith('temples/')) {
+          await deleteFromR2(key);
+        }
+      }
+    } catch (deleteError) {
+      console.error('Failed to delete from R2:', deleteError);
+      // Continue anyway - DB update was successful
+    }
 
     return NextResponse.json({
       success: true,

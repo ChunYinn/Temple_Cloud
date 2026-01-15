@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useToast } from '@/lib/toast-context';
 import {
   CalendarDays,
@@ -14,8 +14,11 @@ import {
   ChevronDown,
   X,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Upload,
+  Crop
 } from 'lucide-react';
+import { ImageCropModalStandalone as ImageCropModal, ASPECT_RATIOS } from './image-crop-modal-standalone';
 
 interface Event {
   id: string;
@@ -65,6 +68,13 @@ export function EventsManagement({ templeId }: { templeId: string }) {
     is_active: true
   });
 
+  // Image upload states
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [showImageCrop, setShowImageCrop] = useState(false);
+  const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
   // Fetch events on component mount
   useEffect(() => {
     fetchEvents();
@@ -113,6 +123,82 @@ export function EventsManagement({ templeId }: { templeId: string }) {
       is_active: true
     });
     setEditingEvent(null);
+    setImageFile(null);
+    setImagePreview(null);
+    if (imageInputRef.current) {
+      imageInputRef.current.value = '';
+    }
+  };
+
+  // Handle image file selection
+  const handleImageSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+        alert('請選擇有效的圖片格式 (JPG, PNG, WebP)');
+        return;
+      }
+
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('圖片大小不可超過 5MB');
+        return;
+      }
+
+      // Create temporary URL for cropping
+      const url = URL.createObjectURL(file);
+      setTempImageUrl(url);
+      setShowImageCrop(true);
+    }
+  }, []);
+
+  // Handle image crop completion
+  const handleImageCropComplete = useCallback((croppedBlob: Blob) => {
+    // Convert blob to File
+    const file = new File([croppedBlob], 'event-image.jpg', { type: 'image/jpeg' });
+    setImageFile(file);
+
+    // Create preview
+    const url = URL.createObjectURL(croppedBlob);
+    setImagePreview(url);
+
+    // Clear the old image_url from formData since we have a new file
+    setFormData(prev => ({ ...prev, image_url: '' }));
+
+    // Cleanup temp URL
+    if (tempImageUrl) {
+      URL.revokeObjectURL(tempImageUrl);
+      setTempImageUrl(null);
+    }
+    setShowImageCrop(false);
+
+    // Reset file input
+    if (imageInputRef.current) {
+      imageInputRef.current.value = '';
+    }
+  }, [tempImageUrl]);
+
+  // Handle crop modal close
+  const handleImageCropClose = useCallback(() => {
+    setShowImageCrop(false);
+    if (tempImageUrl) {
+      URL.revokeObjectURL(tempImageUrl);
+      setTempImageUrl(null);
+    }
+    if (imageInputRef.current) {
+      imageInputRef.current.value = '';
+    }
+  }, [tempImageUrl]);
+
+  // Remove selected image
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setFormData(prev => ({ ...prev, image_url: '' }));
+    if (imageInputRef.current) {
+      imageInputRef.current.value = '';
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -121,11 +207,42 @@ export function EventsManagement({ templeId }: { templeId: string }) {
     setError(null);
 
     try {
+      let finalImageUrl = formData.image_url;
+
+      // Upload image if a new file was selected
+      if (imageFile) {
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', imageFile);
+        uploadFormData.append('templeId', templeId);
+        uploadFormData.append('type', 'event');
+
+        // If editing and there's an old image, pass it for deletion
+        if (editingEvent && editingEvent.image_url) {
+          uploadFormData.append('oldImageUrl', editingEvent.image_url);
+        }
+
+        const uploadRes = await fetch('/api/upload/event-image', {
+          method: 'POST',
+          body: uploadFormData,
+        });
+
+        const uploadResult = await uploadRes.json();
+
+        if (uploadResult.success) {
+          finalImageUrl = uploadResult.imageUrl;
+        } else {
+          alert(uploadResult.error || '圖片上傳失敗');
+          setSaving(false);
+          return;
+        }
+      }
+
       const url = `/api/temples/${templeId}/events`;
       const method = editingEvent ? 'PATCH' : 'POST';
 
       const payload = {
         ...formData,
+        image_url: finalImageUrl,
         max_capacity: formData.max_capacity ? Number(formData.max_capacity) : null,
         ...(editingEvent && { eventId: editingEvent.id })
       };
@@ -188,6 +305,10 @@ export function EventsManagement({ templeId }: { templeId: string }) {
       registration_deadline: event.registration_deadline ? formatDateForInput(event.registration_deadline) : '',
       is_active: event.is_active
     });
+    // Set existing image as preview if exists
+    if (event.image_url) {
+      setImagePreview(event.image_url);
+    }
     setShowNewEventForm(true);
   };
 
@@ -485,15 +606,54 @@ export function EventsManagement({ templeId }: { templeId: string }) {
 
                 <div>
                   <label className="block text-sm font-medium text-stone-700 mb-1">
-                    活動圖片網址
+                    活動圖片
                   </label>
-                  <input
-                    type="url"
-                    value={formData.image_url}
-                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                    className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                    placeholder="https://example.com/image.jpg"
-                  />
+                  <div className="mt-1.5">
+                    {!imagePreview ? (
+                      <div
+                        onClick={() => imageInputRef.current?.click()}
+                        className="border-2 border-dashed border-stone-300 rounded-xl p-6 text-center cursor-pointer hover:border-stone-400 transition-colors"
+                      >
+                        <Upload className="mx-auto h-10 w-10 text-stone-400" />
+                        <p className="mt-2 text-sm text-stone-600">點擊上傳活動圖片</p>
+                        <p className="text-xs text-stone-500 mt-1">建議尺寸 16:9 (1920x1080)</p>
+                        <p className="text-xs text-stone-500">JPG, PNG 或 WebP (最大 5MB)</p>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <div className="relative w-full h-48">
+                          <img
+                            src={imagePreview}
+                            alt="活動圖片預覽"
+                            className="w-full h-full object-cover rounded-xl"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-xl" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={removeImage}
+                          className="absolute top-2 right-2 p-1.5 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 shadow-sm"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => imageInputRef.current?.click()}
+                          className="absolute bottom-2 right-2 px-3 py-1.5 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 shadow-sm flex items-center gap-1.5 text-sm"
+                        >
+                          <Crop className="h-3.5 w-3.5" />
+                          更換圖片
+                        </button>
+                      </div>
+                    )}
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
+                      onChange={handleImageSelect}
+                      className="hidden"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -581,6 +741,20 @@ export function EventsManagement({ templeId }: { templeId: string }) {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Image Crop Modal */}
+      {tempImageUrl && (
+        <ImageCropModal
+          isOpen={showImageCrop}
+          onClose={handleImageCropClose}
+          imageUrl={tempImageUrl}
+          aspectRatio={ASPECT_RATIOS.COVER}
+          onCropComplete={handleImageCropComplete}
+          title="裁切活動圖片"
+          minWidth={640}
+          minHeight={360}
+        />
       )}
     </div>
   );

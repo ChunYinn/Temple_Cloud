@@ -7,7 +7,7 @@ import { Upload, X, Crop } from 'lucide-react';
 import Image from 'next/image';
 import { FacebookIcon, InstagramIcon, LineIcon } from './social-icons';
 import { rootDomain, protocol } from '@/lib/utils';
-import { MultiImageUpload } from './multi-image-upload';
+import { GalleryUploadManager } from './gallery-upload-manager';
 import { ImageCropModalStandalone as ImageCropModal, ASPECT_RATIOS } from './image-crop-modal-standalone';
 
 interface Temple {
@@ -63,6 +63,8 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
   const [coverPreview, setCoverPreview] = useState<string | null>(temple.cover_image_url || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const [galleryHasChanges, setGalleryHasChanges] = useState(false);
+  const [galleryImages, setGalleryImages] = useState<string[]>(temple.gallery_photos || []);
 
   // Cropping modal states
   const [showLogoCrop, setShowLogoCrop] = useState(false);
@@ -272,9 +274,81 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
         }
       }
 
+      // Process gallery changes if any
+      if (galleryHasChanges && (window as any).__galleryUploadSave) {
+        const galleryChanges = await (window as any).__galleryUploadSave();
+
+        // Upload new images
+        const uploadedUrls: string[] = [...galleryImages.filter(url => !url.startsWith('blob:'))];
+
+        for (const addition of galleryChanges.toAdd) {
+          const uploadFormData = new FormData();
+          uploadFormData.append('file', addition.file);
+          uploadFormData.append('templeId', temple.id);
+
+          const uploadRes = await fetch('/api/upload/gallery', {
+            method: 'POST',
+            body: uploadFormData,
+          });
+
+          const result = await uploadRes.json();
+          if (result.success) {
+            uploadedUrls.push(result.photoUrl);
+          }
+        }
+
+        // Handle replacements
+        for (const replacement of galleryChanges.toReplace) {
+          const uploadFormData = new FormData();
+          uploadFormData.append('file', replacement.file);
+          uploadFormData.append('templeId', temple.id);
+
+          const uploadRes = await fetch('/api/upload/gallery', {
+            method: 'POST',
+            body: uploadFormData,
+          });
+
+          const result = await uploadRes.json();
+          if (result.success) {
+            // Replace in array
+            const index = uploadedUrls.findIndex(url => url === replacement.oldUrl);
+            if (index >= 0) {
+              uploadedUrls[index] = result.photoUrl;
+            }
+          }
+        }
+
+        // Remove deleted images from array (don't delete from storage yet)
+        const finalUrls = uploadedUrls.filter(url => !galleryChanges.toRemove.includes(url));
+
+        updatedData.gallery_photos = finalUrls as any;
+      }
+
       await onSave(updatedData);
       setLogoFile(null); // Clear file after successful save
       setCoverFile(null); // Clear cover file after successful save
+
+      // Delete old gallery images after successful save
+      if (galleryHasChanges && (window as any).__galleryUploadSave) {
+        const galleryChanges = await (window as any).__galleryUploadSave();
+
+        // Delete removed and replaced images from storage
+        const toDelete = [
+          ...galleryChanges.toRemove,
+          ...galleryChanges.toReplace.map((r: any) => r.oldUrl)
+        ];
+
+        for (const url of toDelete) {
+          try {
+            await fetch(
+              `/api/upload/gallery?templeId=${temple.id}&photoUrl=${encodeURIComponent(url)}`,
+              { method: 'DELETE' }
+            );
+          } catch (err) {
+            console.error('Failed to delete old image:', err);
+          }
+        }
+      }
     } finally {
       setIsSaving(false);
     }
@@ -581,10 +655,13 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
                 <p className="text-xs text-stone-500 mb-4">
                   上傳寺廟的環境、活動照片，最多 6 張
                 </p>
-                <MultiImageUpload
+                <GalleryUploadManager
                   templeId={temple.id}
-                  existingImages={formData.gallery_photos || []}
-                  onImagesUpdate={(images) => handleInputChange('gallery_photos', images as any)}
+                  initialImages={formData.gallery_photos || []}
+                  onImagesChange={(images, hasChanges) => {
+                    setGalleryImages(images);
+                    setGalleryHasChanges(hasChanges);
+                  }}
                   maxImages={6}
                 />
               </div>

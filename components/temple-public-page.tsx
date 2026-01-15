@@ -194,8 +194,8 @@ export function TemplePublicPage({ temple }: { temple: TempleData }) {
     ...temple,
     avatar: temple.avatar_emoji || TEMPLE_DEFAULTS.avatar,
     coverImage: temple.cover_image_url || TEMPLE_DEFAULTS.coverImage,
-    email: temple.email || `contact@${temple.slug}.temple.tw`,
-    hours: temple.hours || TEMPLE_DEFAULTS.hours,
+    email: temple.email,
+    hours: temple.hours,
     social: {
       facebook: temple.facebook_url || null,
       line: temple.line_id || null,
@@ -539,52 +539,69 @@ const MobileHome = ({ temple, events, services }: any) => {
       </div>
     </section>
 
-    {/* Contact */}
-    <section className="mt-8 px-4 pb-8">
-      <h2 className="text-lg font-bold text-stone-800 mb-4">參拜資訊</h2>
-      <div className="bg-white rounded-xl shadow-sm border border-stone-100 divide-y divide-stone-100">
-        {/* Address with Copy button */}
-        <div className="p-4 flex items-center gap-3">
-          <span className="text-xl">📍</span>
-          <div className="flex-1">
-            <p className="text-xs text-stone-400 mb-1">地址</p>
-            <div className="flex items-start gap-2">
-              <p className="text-stone-700 flex-1">{temple.address || "台灣"}</p>
-              {temple.address && (
-                <button
-                  onClick={() => handleCopyAddress(temple.address!)}
-                  className="text-xs text-stone-500 hover:text-stone-700 flex items-center gap-1 transition-colors px-2 py-0.5 border border-stone-200 rounded-md hover:bg-stone-50"
-                >
-                  {copiedAddress ? (
-                    <><Check className="w-3 h-3" />已複製</>
-                  ) : (
-                    <><Copy className="w-3 h-3" />複製</>
-                  )}
-                </button>
-              )}
+    {/* Contact - Only show if any contact info exists */}
+    {(temple.address || temple.hours || temple.phone || temple.email) && (
+      <section className="mt-8 px-4 pb-8">
+        <h2 className="text-lg font-bold text-stone-800 mb-4">參拜資訊</h2>
+        <div className="bg-white rounded-xl shadow-sm border border-stone-100 divide-y divide-stone-100">
+          {/* Address with Copy button */}
+          {temple.address && (
+            <div className="p-4 flex items-center gap-3">
+              <span className="text-xl">📍</span>
+              <div className="flex-1">
+                <p className="text-xs text-stone-400 mb-1">地址</p>
+                <div className="flex items-start gap-2">
+                  <p className="text-stone-700 flex-1">{temple.address}</p>
+                  <button
+                    onClick={() => handleCopyAddress(temple.address!)}
+                    className="text-xs text-stone-500 hover:text-stone-700 flex items-center gap-1 transition-colors px-2 py-0.5 border border-stone-200 rounded-md hover:bg-stone-50"
+                  >
+                    {copiedAddress ? (
+                      <><Check className="w-3 h-3" />已複製</>
+                    ) : (
+                      <><Copy className="w-3 h-3" />複製</>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
 
-        {/* Opening Hours */}
-        <div className="p-4 flex items-center gap-3">
-          <span className="text-xl">⏰</span>
-          <div>
-            <p className="text-xs text-stone-400">開放時間</p>
-            <p className="text-stone-700">{temple.hours}</p>
-          </div>
-        </div>
+          {/* Opening Hours */}
+          {temple.hours && (
+            <div className="p-4 flex items-center gap-3">
+              <span className="text-xl">⏰</span>
+              <div>
+                <p className="text-xs text-stone-400">開放時間</p>
+                <p className="text-stone-700">{temple.hours}</p>
+              </div>
+            </div>
+          )}
 
-        {/* Phone */}
-        <div className="p-4 flex items-center gap-3">
-          <span className="text-xl">📞</span>
-          <div>
-            <p className="text-xs text-stone-400">聯絡電話</p>
-            <p className="text-stone-700">{temple.phone || "待更新"}</p>
-          </div>
+          {/* Phone */}
+          {temple.phone && (
+            <div className="p-4 flex items-center gap-3">
+              <span className="text-xl">📞</span>
+              <div>
+                <p className="text-xs text-stone-400">聯絡電話</p>
+                <p className="text-stone-700">{temple.phone}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Email */}
+          {temple.email && (
+            <div className="p-4 flex items-center gap-3">
+              <span className="text-xl">📧</span>
+              <div>
+                <p className="text-xs text-stone-400">電子信箱</p>
+                <p className="text-stone-700">{temple.email}</p>
+              </div>
+            </div>
+          )}
         </div>
-      </div>
-    </section>
+      </section>
+    )}
   </div>
   );
 };
@@ -850,12 +867,14 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
                   >
                     <span>📞</span> {temple.phone}
                   </a>
-                  <span className="text-stone-300">|</span>
+                  {temple.hours && <span className="text-stone-300">|</span>}
                 </>
               )}
-              <span className="flex items-center gap-2">
-                <span>⏰</span> {temple.hours}
-              </span>
+              {temple.hours && (
+                <span className="flex items-center gap-2">
+                  <span>⏰</span> {temple.hours}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -1036,68 +1055,72 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
               </div>
             </motion.div>
 
-            {/* Contact Info */}
-            <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
-              <div className="px-6 py-4 bg-gradient-to-r from-stone-50 to-white border-b border-stone-100">
-                <h3 className="font-bold text-stone-800">參拜資訊</h3>
-              </div>
-              <div className="p-6 space-y-5">
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-lg">
-                    📍
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-stone-600 mb-1">地址</p>
-                    <div className="flex items-start gap-2">
-                      <p className="text-base text-stone-900 break-words flex-1">{temple.address || "台灣"}</p>
-                      {temple.address && (
-                        <button
-                          onClick={() => handleCopyAddress(temple.address!)}
-                          className="text-xs text-stone-500 hover:text-stone-700 flex items-center gap-1 transition-colors px-2 py-1 border border-stone-200 rounded-md hover:bg-stone-50"
-                        >
-                          {copiedAddress ? (
-                            <><Check className="w-3 h-3" />已複製</>
-                          ) : (
-                            <><Copy className="w-3 h-3" />複製</>
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  </div>
+            {/* Contact Info - Only show if any contact info exists */}
+            {(temple.address || temple.hours || temple.phone || temple.email) && (
+              <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
+                <div className="px-6 py-4 bg-gradient-to-r from-stone-50 to-white border-b border-stone-100">
+                  <h3 className="font-bold text-stone-800">參拜資訊</h3>
                 </div>
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-lg">
-                    ⏰
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-stone-600 mb-1">開放時間</p>
-                    <p className="text-base text-stone-900">{temple.hours || "每日 06:00 - 21:00"}</p>
-                  </div>
+                <div className="p-6 space-y-5">
+                  {temple.address && (
+                    <div className="flex gap-4">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-lg">
+                        📍
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-stone-600 mb-1">地址</p>
+                        <div className="flex items-start gap-2">
+                          <p className="text-base text-stone-900 break-words flex-1">{temple.address}</p>
+                          <button
+                            onClick={() => handleCopyAddress(temple.address!)}
+                            className="text-xs text-stone-500 hover:text-stone-700 flex items-center gap-1 transition-colors px-2 py-1 border border-stone-200 rounded-md hover:bg-stone-50"
+                          >
+                            {copiedAddress ? (
+                              <><Check className="w-3 h-3" />已複製</>
+                            ) : (
+                              <><Copy className="w-3 h-3" />複製</>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {temple.hours && (
+                    <div className="flex gap-4">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-lg">
+                        ⏰
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-stone-600 mb-1">開放時間</p>
+                        <p className="text-base text-stone-900">{temple.hours}</p>
+                      </div>
+                    </div>
+                  )}
+                  {temple.phone && (
+                    <div className="flex gap-4">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-lg">
+                        📞
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-stone-600 mb-1">聯絡電話</p>
+                        <p className="text-base text-stone-900">{temple.phone}</p>
+                      </div>
+                    </div>
+                  )}
+                  {temple.email && (
+                    <div className="flex gap-4">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-lg">
+                        📧
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-stone-600 mb-1">電子信箱</p>
+                        <p className="text-base text-stone-900 break-all">{temple.email}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                {temple.phone && (
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-lg">
-                      📞
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-stone-600 mb-1">聯絡電話</p>
-                      <p className="text-base text-stone-900">{temple.phone}</p>
-                    </div>
-                  </div>
-                )}
-                {temple.email && (
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-lg">
-                      📧
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-stone-600 mb-1">電子信箱</p>
-                      <p className="text-base text-stone-900 break-all">{temple.email}</p>
-                    </div>
-                  </div>
-                )}
               </div>
-            </div>
+            )}
 
             {/* Social Links - Only show if at least one social media exists */}
             {(temple.facebook_url || temple.line_id || temple.instagram_url) && (
@@ -1388,80 +1411,85 @@ const DesktopAbout = ({ temple, gallery }: any) => {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
-            <div className="px-6 py-4 bg-gradient-to-r from-stone-50 to-white border-b border-stone-100">
-              <h3 className="font-bold text-stone-800">聯絡資訊</h3>
-            </div>
-            <div className="p-6 space-y-5">
-              {/* Address with Copy */}
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-lg">
-                  📍
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-stone-600 mb-1">地址</p>
-                  <div className="flex items-start gap-2">
-                    <p className="text-base text-stone-900 break-words flex-1">{temple.address || "台灣"}</p>
-                    {temple.address && (
-                      <button
-                        onClick={() => handleCopyAddress(temple.address!)}
-                        className="text-xs text-stone-500 hover:text-stone-700 flex items-center gap-1 transition-colors px-2 py-1 border border-stone-200 rounded-md hover:bg-stone-50"
-                      >
-                        {copiedAddress ? (
-                          <>
-                            <Check className="w-3 h-3" />
-                            已複製
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-3 h-3" />
-                            複製
-                          </>
-                        )}
-                      </button>
-                    )}
-                  </div>
-                </div>
+          {/* Contact Info - Only show if any contact info exists */}
+          {(temple.address || temple.hours || temple.phone || temple.email) && (
+            <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
+              <div className="px-6 py-4 bg-gradient-to-r from-stone-50 to-white border-b border-stone-100">
+                <h3 className="font-bold text-stone-800">聯絡資訊</h3>
               </div>
+              <div className="p-6 space-y-5">
+                {/* Address with Copy */}
+                {temple.address && (
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-lg">
+                      📍
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-stone-600 mb-1">地址</p>
+                      <div className="flex items-start gap-2">
+                        <p className="text-base text-stone-900 break-words flex-1">{temple.address}</p>
+                        <button
+                          onClick={() => handleCopyAddress(temple.address!)}
+                          className="text-xs text-stone-500 hover:text-stone-700 flex items-center gap-1 transition-colors px-2 py-1 border border-stone-200 rounded-md hover:bg-stone-50"
+                        >
+                          {copiedAddress ? (
+                            <>
+                              <Check className="w-3 h-3" />
+                              已複製
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3" />
+                              複製
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-              {/* Hours */}
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-lg">
-                  ⏰
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-stone-600 mb-1">開放時間</p>
-                  <p className="text-base text-stone-900">{temple.hours || "每日 06:00 - 21:00"}</p>
-                </div>
+                {/* Hours */}
+                {temple.hours && (
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-lg">
+                      ⏰
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-stone-600 mb-1">開放時間</p>
+                      <p className="text-base text-stone-900">{temple.hours}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Phone */}
+                {temple.phone && (
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-lg">
+                      📞
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-stone-600 mb-1">聯絡電話</p>
+                      <p className="text-base text-stone-900">{temple.phone}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Email */}
+                {temple.email && (
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-lg">
+                      📧
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-stone-600 mb-1">電子信箱</p>
+                      <p className="text-base text-stone-900 break-all">{temple.email}</p>
+                    </div>
+                  </div>
+                )}
               </div>
-
-              {/* Phone */}
-              {temple.phone && (
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-lg">
-                    📞
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-stone-600 mb-1">聯絡電話</p>
-                    <p className="text-base text-stone-900">{temple.phone}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Email */}
-              {temple.email && (
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-lg">
-                    📧
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-stone-600 mb-1">電子信箱</p>
-                    <p className="text-base text-stone-900 break-all">{temple.email}</p>
-                  </div>
-                </div>
-              )}
             </div>
-          </div>
+          )}
 
           {/* Google Maps */}
           {temple.address && (
