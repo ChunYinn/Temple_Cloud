@@ -7,7 +7,7 @@ import { generateUniqueFilename } from '@/lib/image-validation';
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = await requireAuth();
+    await requireAuth();
 
     const formData = await request.formData();
     const file = formData.get('file') as File;

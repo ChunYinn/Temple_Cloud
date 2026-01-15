@@ -20,12 +20,12 @@ interface StatsData {
   revenue: {
     total: number;
     growth: number;
-    chartData: { date: string; amount: number }[];
+    chartData: any[];
   };
   visitors: {
     total: number;
     growth: number;
-    chartData: { date: string; count: number }[];
+    chartData: any[];
   };
   orders: {
     total: number;

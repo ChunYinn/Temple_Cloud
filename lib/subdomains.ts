@@ -23,7 +23,8 @@ export async function getTempleBySlug(slug: string) {
         orderBy: {
           sort_order: 'asc'
         }
-      }
+      },
+      donation_settings: true
     }
   });
 }

@@ -131,50 +131,59 @@ export function OrdersManagement({ templeId }: { templeId: string }) {
     // Stats are now fetched with orders in the same API call
   };
 
+  // Helper functions for filtering
+  const filterByTab = (orderList: Order[], tab: string): Order[] => {
+    if (tab === 'all') return orderList;
+    return orderList.filter(order => order.type === tab);
+  };
+
+  const filterBySearch = (orderList: Order[], search: string): Order[] => {
+    if (!search) return orderList;
+    const searchLower = search.toLowerCase();
+    return orderList.filter(order =>
+      order.order_number.toLowerCase().includes(searchLower) ||
+      order.customer_name.toLowerCase().includes(searchLower) ||
+      order.customer_email.toLowerCase().includes(searchLower)
+    );
+  };
+
+  const filterByStatus = (orderList: Order[], status: string): Order[] => {
+    if (status === 'all') return orderList;
+    return orderList.filter(order => order.status === status);
+  };
+
+  const getDateFilterValue = (filter: string): Date => {
+    const filterDate = new Date();
+
+    switch (filter) {
+      case 'today':
+        filterDate.setHours(0, 0, 0, 0);
+        break;
+      case 'week':
+        filterDate.setDate(filterDate.getDate() - 7);
+        break;
+      case 'month':
+        filterDate.setMonth(filterDate.getMonth() - 1);
+        break;
+    }
+
+    return filterDate;
+  };
+
+  const filterByDate = (orderList: Order[], filter: string): Order[] => {
+    if (filter === 'all') return orderList;
+    const filterDate = getDateFilterValue(filter);
+    return orderList.filter(order => new Date(order.created_at) >= filterDate);
+  };
+
   // Filter orders based on tab and search
   useEffect(() => {
     let filtered = [...orders];
 
-    // Tab filter
-    if (activeTab !== 'all') {
-      filtered = filtered.filter(order => order.type === activeTab);
-    }
-
-    // Search filter
-    if (searchTerm) {
-      filtered = filtered.filter(order =>
-        order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.customer_email.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(order => order.status === statusFilter);
-    }
-
-    // Date filter
-    if (dateFilter !== 'all') {
-      const now = new Date();
-      const filterDate = new Date();
-
-      switch (dateFilter) {
-        case 'today':
-          filterDate.setHours(0, 0, 0, 0);
-          break;
-        case 'week':
-          filterDate.setDate(now.getDate() - 7);
-          break;
-        case 'month':
-          filterDate.setMonth(now.getMonth() - 1);
-          break;
-      }
-
-      filtered = filtered.filter(order =>
-        new Date(order.created_at) >= filterDate
-      );
-    }
+    filtered = filterByTab(filtered, activeTab);
+    filtered = filterBySearch(filtered, searchTerm);
+    filtered = filterByStatus(filtered, statusFilter);
+    filtered = filterByDate(filtered, dateFilter);
 
     setFilteredOrders(filtered);
     setCurrentPage(1);

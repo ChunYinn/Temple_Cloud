@@ -20,7 +20,7 @@ export function validateImageFile(
     return { valid: false, error: ERROR_MESSAGES.UPLOAD.NO_FILE };
   }
 
-  if (!UPLOAD_CONFIG.ALLOWED_IMAGE_TYPES.includes(file.type)) {
+  if (!UPLOAD_CONFIG.ALLOWED_FORMATS.includes(file.type)) {
     return { valid: false, error: ERROR_MESSAGES.UPLOAD.INVALID_FORMAT };
   }
 

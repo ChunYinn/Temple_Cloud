@@ -207,6 +207,143 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
     }
   }, [tempCoverUrl]);
 
+  // Helper function to upload logo
+  const uploadLogo = async (file: File, templeId: string, oldLogoUrl?: string, oldFaviconUrl?: string) => {
+    const uploadFormData = new FormData();
+    uploadFormData.append('file', file);
+    uploadFormData.append('templeId', templeId);
+
+    if (oldLogoUrl) uploadFormData.append('oldLogoUrl', oldLogoUrl);
+    if (oldFaviconUrl) uploadFormData.append('oldFaviconUrl', oldFaviconUrl);
+
+    const uploadRes = await fetch('/api/upload/logo', {
+      method: 'POST',
+      body: uploadFormData,
+    });
+
+    return uploadRes.json();
+  };
+
+  // Helper function to upload cover
+  const uploadCover = async (file: File, templeId: string, oldCoverUrl?: string) => {
+    const uploadFormData = new FormData();
+    uploadFormData.append('file', file);
+    uploadFormData.append('templeId', templeId);
+
+    if (oldCoverUrl) uploadFormData.append('oldCoverUrl', oldCoverUrl);
+
+    const uploadRes = await fetch('/api/upload/cover', {
+      method: 'POST',
+      body: uploadFormData,
+    });
+
+    return uploadRes.json();
+  };
+
+  // Helper function to upload gallery image
+  const uploadGalleryImage = async (file: File, templeId: string) => {
+    const uploadFormData = new FormData();
+    uploadFormData.append('file', file);
+    uploadFormData.append('templeId', templeId);
+
+    const uploadRes = await fetch('/api/upload/gallery', {
+      method: 'POST',
+      body: uploadFormData,
+    });
+
+    return uploadRes.json();
+  };
+
+  // Helper function to delete gallery image
+  const deleteGalleryImage = async (url: string, templeId: string) => {
+    try {
+      await fetch(
+        `/api/upload/gallery?templeId=${templeId}&photoUrl=${encodeURIComponent(url)}`,
+        { method: 'DELETE' }
+      );
+    } catch (err) {
+      console.error('Failed to delete old image:', err);
+    }
+  };
+
+  // Helper function to process gallery additions
+  const processGalleryAdditions = async (additions: any[], templeId: string): Promise<string[]> => {
+    const urls: string[] = [];
+    for (const addition of additions) {
+      const result = await uploadGalleryImage(addition.file, templeId);
+      if (result.success) {
+        urls.push(result.photoUrl);
+      }
+    }
+    return urls;
+  };
+
+  // Helper function to process gallery replacements
+  const processGalleryReplacements = async (
+    replacements: any[],
+    templeId: string,
+    currentUrls: string[]
+  ): Promise<string[]> => {
+    const updatedUrls = [...currentUrls];
+
+    for (const replacement of replacements) {
+      const result = await uploadGalleryImage(replacement.file, templeId);
+      if (result.success) {
+        const index = updatedUrls.findIndex(url => url === replacement.oldUrl);
+        if (index >= 0) {
+          updatedUrls[index] = result.photoUrl;
+        }
+      }
+    }
+
+    return updatedUrls;
+  };
+
+  // Helper function to process gallery changes
+  const processGalleryChanges = async (templeId: string): Promise<string[] | null> => {
+    if (!galleryHasChanges || !(window as any).__galleryUploadSave) {
+      return null;
+    }
+
+    const galleryChanges = await (window as any).__galleryUploadSave();
+
+    // Start with existing non-blob URLs
+    let uploadedUrls: string[] = [...galleryImages.filter(url => !url.startsWith('blob:'))];
+
+    // Process additions
+    const newUrls = await processGalleryAdditions(galleryChanges.toAdd, templeId);
+    uploadedUrls = [...uploadedUrls, ...newUrls];
+
+    // Process replacements
+    uploadedUrls = await processGalleryReplacements(
+      galleryChanges.toReplace,
+      templeId,
+      uploadedUrls
+    );
+
+    // Remove deleted images from array
+    const finalUrls = uploadedUrls.filter(url => !galleryChanges.toRemove.includes(url));
+
+    return finalUrls;
+  };
+
+  // Helper function to cleanup deleted gallery images
+  const cleanupGalleryImages = async (templeId: string): Promise<void> => {
+    if (!galleryHasChanges || !(window as any).__galleryUploadSave) {
+      return;
+    }
+
+    const galleryChanges = await (window as any).__galleryUploadSave();
+    const toDelete = [
+      ...galleryChanges.toRemove,
+      ...galleryChanges.toReplace.map((r: any) => r.oldUrl)
+    ];
+
+    for (const url of toDelete) {
+      await deleteGalleryImage(url, templeId);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!onSave) return;
@@ -215,140 +352,47 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
     try {
       let updatedData = { ...formData };
 
-      // Upload logo if a new file was selected
+      // Upload logo if needed
       if (logoFile) {
-        const uploadFormData = new FormData();
-        uploadFormData.append('file', logoFile);
-        uploadFormData.append('templeId', temple.id);
-        // Pass old URLs for deletion
-        if (temple.logo_url) {
-          uploadFormData.append('oldLogoUrl', temple.logo_url);
-        }
-        if (temple.favicon_url) {
-          uploadFormData.append('oldFaviconUrl', temple.favicon_url);
-        }
+        const result = await uploadLogo(logoFile, temple.id, temple.logo_url || undefined, temple.favicon_url || undefined);
 
-        const uploadRes = await fetch('/api/upload/logo', {
-          method: 'POST',
-          body: uploadFormData,
-        });
-
-        const uploadResult = await uploadRes.json();
-
-        if (uploadResult.success) {
-          updatedData.logo_url = uploadResult.logoUrl;
-          // Also set favicon URL from the same upload
-          if (uploadResult.faviconUrl) {
-            updatedData.favicon_url = uploadResult.faviconUrl;
-          }
-        } else {
-          alert(uploadResult.error || '圖片上傳失敗');
+        if (!result.success) {
+          alert(result.error || '圖片上傳失敗');
           setIsSaving(false);
           return;
         }
+
+        updatedData.logo_url = result.logoUrl;
+        if (result.faviconUrl) {
+          updatedData.favicon_url = result.faviconUrl;
+        }
       }
 
-      // Upload cover image if a new file was selected
+      // Upload cover if needed
       if (coverFile) {
-        const uploadFormData = new FormData();
-        uploadFormData.append('file', coverFile);
-        uploadFormData.append('templeId', temple.id);
-        // Pass old URL for deletion
-        if (temple.cover_image_url) {
-          uploadFormData.append('oldCoverUrl', temple.cover_image_url);
-        }
+        const result = await uploadCover(coverFile, temple.id, temple.cover_image_url || undefined);
 
-        const uploadRes = await fetch('/api/upload/cover', {
-          method: 'POST',
-          body: uploadFormData,
-        });
-
-        const uploadResult = await uploadRes.json();
-
-        if (uploadResult.success) {
-          updatedData.cover_image_url = uploadResult.coverUrl;
-        } else {
-          alert(uploadResult.error || '封面圖片上傳失敗');
+        if (!result.success) {
+          alert(result.error || '封面圖片上傳失敗');
           setIsSaving(false);
           return;
         }
+
+        updatedData.cover_image_url = result.coverUrl;
       }
 
-      // Process gallery changes if any
-      if (galleryHasChanges && (window as any).__galleryUploadSave) {
-        const galleryChanges = await (window as any).__galleryUploadSave();
-
-        // Upload new images
-        const uploadedUrls: string[] = [...galleryImages.filter(url => !url.startsWith('blob:'))];
-
-        for (const addition of galleryChanges.toAdd) {
-          const uploadFormData = new FormData();
-          uploadFormData.append('file', addition.file);
-          uploadFormData.append('templeId', temple.id);
-
-          const uploadRes = await fetch('/api/upload/gallery', {
-            method: 'POST',
-            body: uploadFormData,
-          });
-
-          const result = await uploadRes.json();
-          if (result.success) {
-            uploadedUrls.push(result.photoUrl);
-          }
-        }
-
-        // Handle replacements
-        for (const replacement of galleryChanges.toReplace) {
-          const uploadFormData = new FormData();
-          uploadFormData.append('file', replacement.file);
-          uploadFormData.append('templeId', temple.id);
-
-          const uploadRes = await fetch('/api/upload/gallery', {
-            method: 'POST',
-            body: uploadFormData,
-          });
-
-          const result = await uploadRes.json();
-          if (result.success) {
-            // Replace in array
-            const index = uploadedUrls.findIndex(url => url === replacement.oldUrl);
-            if (index >= 0) {
-              uploadedUrls[index] = result.photoUrl;
-            }
-          }
-        }
-
-        // Remove deleted images from array (don't delete from storage yet)
-        const finalUrls = uploadedUrls.filter(url => !galleryChanges.toRemove.includes(url));
-
-        updatedData.gallery_photos = finalUrls as any;
+      // Process gallery changes
+      const galleryUrls = await processGalleryChanges(temple.id);
+      if (galleryUrls) {
+        updatedData.gallery_photos = galleryUrls as any;
       }
 
       await onSave(updatedData);
-      setLogoFile(null); // Clear file after successful save
-      setCoverFile(null); // Clear cover file after successful save
+      setLogoFile(null);
+      setCoverFile(null);
 
-      // Delete old gallery images after successful save
-      if (galleryHasChanges && (window as any).__galleryUploadSave) {
-        const galleryChanges = await (window as any).__galleryUploadSave();
-
-        // Delete removed and replaced images from storage
-        const toDelete = [
-          ...galleryChanges.toRemove,
-          ...galleryChanges.toReplace.map((r: any) => r.oldUrl)
-        ];
-
-        for (const url of toDelete) {
-          try {
-            await fetch(
-              `/api/upload/gallery?templeId=${temple.id}&photoUrl=${encodeURIComponent(url)}`,
-              { method: 'DELETE' }
-            );
-          } catch (err) {
-            console.error('Failed to delete old image:', err);
-          }
-        }
-      }
+      // Cleanup deleted gallery images
+      await cleanupGalleryImages(temple.id);
     } finally {
       setIsSaving(false);
     }

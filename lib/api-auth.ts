@@ -26,13 +26,13 @@ export async function requireAuth(): Promise<string> {
 export async function checkTemplePermission(
   userId: string,
   templeId: string,
-  requiredRoles: string[] = ['admin', 'staff']
+  requiredRoles: ('admin' | 'staff')[] = ['admin', 'staff']
 ) {
   const member = await prisma.temple_members.findFirst({
     where: {
       temple_id: templeId,
       auth_user_id: userId,
-      role: { in: requiredRoles },
+      role: { in: requiredRoles as any },
     },
   });
   return member;
@@ -47,7 +47,7 @@ export async function checkTemplePermission(
  */
 export async function requireTemplePermission(
   templeId: string,
-  requiredRoles: string[] = ['admin', 'staff']
+  requiredRoles: ('admin' | 'staff')[] = ['admin', 'staff']
 ): Promise<string> {
   const userId = await requireAuth();
 

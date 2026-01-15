@@ -33,6 +33,15 @@ enum OrderStatus {
   cancelled
 }
 
+// Standardized prayer service codes
+enum PrayerServiceCode {
+  TAISUI      // 安太歲
+  GUANGMING   // 光明燈
+  WENCHANG    // 文昌燈
+  BAIDOU      // 拜斗
+  YUELAO      // 月老姻緣簿
+}
+
 // =============================================
 // MAIN TABLES
 // =============================================
@@ -78,6 +87,8 @@ model temples {
   orders                  orders[]
   gallery                 gallery_images[]
   stats                   temple_stats[]
+  prayer_services         temple_prayer_services[]
+  donation_settings       temple_donation_settings?
 }
 
 /// Temple membership
@@ -191,4 +202,54 @@ model temple_stats {
   temple           temples   @relation(fields: [temple_id], references: [id], onDelete: Cascade)
 
   @@unique([temple_id, date])
+}
+
+/// Temple prayer services configuration
+/// Each temple can enable/disable standardized prayer services
+model temple_prayer_services {
+  id               String            @id @default(uuid()) @db.Uuid
+  temple_id        String            @db.Uuid
+  service_code     PrayerServiceCode // Standardized service code
+  is_enabled       Boolean           @default(false)
+  custom_price     Int?              // Override default price if needed
+  max_quantity     Int?              // Limit per order if needed
+  annual_limit     Int?              // Annual capacity limit
+  current_year     Int?              // Current year for tracking
+  current_count    Int               @default(0) // Current registrations this year
+  created_at       DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime          @updatedAt @db.Timestamptz(6)
+
+  temple           temples           @relation(fields: [temple_id], references: [id], onDelete: Cascade)
+
+  @@unique([temple_id, service_code])
+  @@index([temple_id, is_enabled])
+}
+
+/// Temple donation settings
+model temple_donation_settings {
+  id                    String    @id @default(uuid()) @db.Uuid
+  temple_id             String    @unique @db.Uuid
+  is_enabled            Boolean   @default(true)
+  min_amount            Int       @default(100) // Minimum donation amount
+  suggested_amounts     Int[]     @default([100, 300, 500, 1000, 3000, 5000])
+  allow_anonymous       Boolean   @default(true)
+  custom_message        String?   @db.Text // Custom thank you message
+  created_at            DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime  @updatedAt @db.Timestamptz(6)
+
+  temple                temples   @relation(fields: [temple_id], references: [id], onDelete: Cascade)
+}
+
+/// Prayer service orders (extends the existing orders table)
+model prayer_service_orders {
+  id                    String              @id @default(uuid()) @db.Uuid
+  order_id              String              @db.Uuid // Links to main orders table
+  service_code          PrayerServiceCode
+  quantity              Int                 @default(1)
+  unit_price            Int
+  subtotal              Int
+  blessing_entries      Json                // Store blessing entry details as JSON
+  created_at            DateTime            @default(now()) @db.Timestamptz(6)
+
+  @@index([order_id])
 }

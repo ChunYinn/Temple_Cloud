@@ -77,24 +77,28 @@ export function AdminDashboard({ tenants }: { tenants: Temple[] }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 mb-4 sm:mb-6 lg:mb-8">
           {[
             {
+              id: 'temple-count',
               label: '寺廟數量',
               value: temples.length.toString(),
               icon: '🏛️',
               color: 'bg-gradient-to-br from-red-500 to-red-600'
             },
             {
+              id: 'monthly-views',
               label: '本月瀏覽',
               value: mockStats.monthlyViews.toLocaleString(),
               icon: '👁️',
               color: 'bg-gradient-to-br from-blue-500 to-blue-600'
             },
             {
+              id: 'monthly-revenue',
               label: '本月收款',
               value: `NT$ ${mockStats.monthlyRevenue.toLocaleString()}`,
               icon: '💰',
               color: 'bg-gradient-to-br from-emerald-500 to-emerald-600'
             },
             {
+              id: 'pending-tasks',
               label: '待處理',
               value: mockStats.pending.toString(),
               icon: '📋',
@@ -102,7 +106,7 @@ export function AdminDashboard({ tenants }: { tenants: Temple[] }) {
             },
           ].map((stat, i) => (
             <motion.div
-              key={i}
+              key={stat.id}
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: i * 0.1 }}

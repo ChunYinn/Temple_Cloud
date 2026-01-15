@@ -57,25 +57,31 @@ export function CreateTempleModal({ onClose }: { onClose: () => void }) {
     instagram_url: '',
   });
 
+  // Validation functions for each step
+  const validateStep1 = (): string[] => {
+    const errors: string[] = [];
+    if (!formValues.name.trim()) errors.push('請輸入寺廟名稱');
+    if (!formValues.slug.trim()) errors.push('請輸入網址名稱');
+    if (formValues.slug && !/^[a-z0-9-]+$/.test(formValues.slug)) {
+      errors.push('網址名稱只能包含小寫英文、數字和連字符');
+    }
+    if (!logoFile) errors.push('請上傳寺廟標誌');
+    if (!formValues.intro.trim()) errors.push('請輸入寺廟簡介');
+    return errors;
+  };
+
+  const validateStep2 = (): string[] => {
+    const errors: string[] = [];
+    if (!formValues.address.trim()) errors.push('請輸入地址');
+    if (!formValues.phone.trim()) errors.push('請輸入電話');
+    if (!formValues.email.trim()) errors.push('請輸入電子信箱');
+    if (!formValues.hours.trim()) errors.push('請設定開放時間');
+    return errors;
+  };
+
   // Check if required fields are filled for each step
   const validateStep = (step: number): { isValid: boolean; errors: string[] } => {
-    const errors: string[] = [];
-
-    if (step === 1) {
-      if (!formValues.name.trim()) errors.push('請輸入寺廟名稱');
-      if (!formValues.slug.trim()) errors.push('請輸入網址名稱');
-      if (formValues.slug && !/^[a-z0-9-]+$/.test(formValues.slug)) {
-        errors.push('網址名稱只能包含小寫英文、數字和連字符');
-      }
-      if (!logoFile) errors.push('請上傳寺廟標誌');
-      if (!formValues.intro.trim()) errors.push('請輸入寺廟簡介');
-    } else if (step === 2) {
-      if (!formValues.address.trim()) errors.push('請輸入地址');
-      if (!formValues.phone.trim()) errors.push('請輸入電話');
-      if (!formValues.email.trim()) errors.push('請輸入電子信箱');
-      if (!formValues.hours.trim()) errors.push('請設定開放時間');
-    }
-
+    const errors = step === 1 ? validateStep1() : step === 2 ? validateStep2() : [];
     return { isValid: errors.length === 0, errors };
   };
 

@@ -1,19 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
-import { Copy, Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Copy, Check, X, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   BRAND,
   TEMPLE_DEFAULTS,
   NAV_ITEMS,
   QUICK_ACTIONS,
-  MOCK_EVENTS,
-  MOCK_SERVICES,
   MOCK_GALLERY,
   COLORS,
   IMAGE_SIZES,
 } from "@/lib/constants";
+import { TempleServicesDisplay } from "@/components/temple-services-display";
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -118,7 +117,18 @@ type ServiceData = {
   is_popular: boolean;
 };
 
+type DonationSettings = {
+  id: string;
+  temple_id: string;
+  is_enabled: boolean;
+  min_amount: number;
+  suggested_amounts: number[];
+  allow_anonymous: boolean;
+  custom_message?: string | null;
+};
+
 type TempleData = {
+  id: string;
   name: string;
   slug: string;
   intro?: string | null;
@@ -137,6 +147,7 @@ type TempleData = {
   instagram_url?: string | null;
   events?: EventData[];
   services?: ServiceData[];
+  donation_settings?: DonationSettings | null;
 };
 
 // Helper function to process social media URLs
@@ -225,10 +236,10 @@ export function TemplePublicPage({ temple }: { temple: TempleData }) {
         currentRegistrations: event.current_registrations,
         registrationDeadline: event.registration_deadline
       }))
-    : MOCK_EVENTS;
+    : []; // No mock data - show empty if no real events
 
-  // Use mock services for now (as requested)
-  const services = MOCK_SERVICES;
+  // Services are now handled by TempleServicesDisplay component
+  const services: any[] = [];
 
   // Use real gallery photos if available, otherwise use mock
   const gallery = temple.gallery_photos && temple.gallery_photos.length > 0
@@ -343,8 +354,14 @@ export function TemplePublicPage({ temple }: { temple: TempleData }) {
               services={services}
             />
           )}
-          {activeTab === "services" && <MobileServices services={services} />}
-          {activeTab === "events" && <MobileEvents events={events} />}
+          {activeTab === "services" && (
+            <TempleServicesDisplay
+              templeId={temple.id}
+              templeSlug={temple.slug}
+              templeName={temple.name}
+            />
+          )}
+          {activeTab === "events" && <MobileEvents events={events} temple={templeData} />}
           {activeTab === "about" && (
             <MobileAbout temple={templeData} gallery={gallery} />
           )}
@@ -360,9 +377,13 @@ export function TemplePublicPage({ temple }: { temple: TempleData }) {
             />
           )}
           {activeSection === "services" && (
-            <DesktopServices services={services} />
+            <TempleServicesDisplay
+              templeId={temple.id}
+              templeSlug={temple.slug}
+              templeName={temple.name}
+            />
           )}
-          {activeSection === "events" && <DesktopEvents events={events} />}
+          {activeSection === "events" && <DesktopEvents events={events} temple={templeData} />}
           {activeSection === "about" && (
             <DesktopAbout temple={templeData} gallery={gallery} />
           )}
@@ -404,6 +425,108 @@ export function TemplePublicPage({ temple }: { temple: TempleData }) {
     </div>
   );
 }
+
+// Gallery Modal Component
+interface GalleryModalProps {
+  images: Array<{ url: string; caption?: string | null }>;
+  selectedIndex: number;
+  onClose: () => void;
+}
+
+const GalleryModal: React.FC<GalleryModalProps> = ({ images, selectedIndex, onClose }) => {
+  const [currentIndex, setCurrentIndex] = useState(selectedIndex);
+
+  const handlePrevious = () => {
+    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  // Handle keyboard navigation
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') handlePrevious();
+      if (e.key === 'ArrowRight') handleNext();
+      if (e.key === 'Escape') onClose();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10 z-50"
+        >
+          <X className="w-6 h-6" />
+        </button>
+
+        {/* Navigation buttons */}
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePrevious();
+              }}
+              className="absolute left-4 text-white/80 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10 z-50"
+            >
+              <ChevronLeft className="w-8 h-8" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNext();
+              }}
+              className="absolute right-4 text-white/80 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10 z-50"
+            >
+              <ChevronRight className="w-8 h-8" />
+            </button>
+          </>
+        )}
+
+        {/* Image container */}
+        <motion.div
+          key={currentIndex}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+          transition={{ duration: 0.2 }}
+          className="relative max-w-5xl max-h-[90vh] flex flex-col items-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <img
+            src={images[currentIndex].url}
+            alt={images[currentIndex].caption || `Image ${currentIndex + 1}`}
+            className="max-w-full max-h-[80vh] object-contain rounded-lg"
+          />
+
+          {/* Caption and counter */}
+          <div className="mt-4 text-center">
+            {images[currentIndex].caption && (
+              <p className="text-white text-lg mb-2">{images[currentIndex].caption}</p>
+            )}
+            <p className="text-white/60 text-sm">
+              {currentIndex + 1} / {images.length}
+            </p>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
 
 // =============================================
 // MOBILE COMPONENTS
@@ -470,73 +593,101 @@ const MobileHome = ({ temple, events, services }: any) => {
     <section className="mt-8 px-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold text-stone-800">近期活動</h2>
-        <button className="text-red-700 text-sm font-medium">查看全部</button>
+        {events.length > 0 && (
+          <button className="text-red-700 text-sm font-medium">查看全部</button>
+        )}
       </div>
-      <div className="space-y-3">
-        {events.slice(0, 2).map((event: any) => (
-          <motion.div
-            key={event.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-xl p-4 shadow-sm border border-stone-100 flex items-center gap-4"
-          >
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex flex-col items-center justify-center text-white">
-              <span className="text-xs font-medium">
-                {event.date.split("/")[1]}月
-              </span>
-              <span className="text-lg font-bold leading-none">
-                {event.date.split("/")[2]}
-              </span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-stone-800 truncate">
-                {event.title}
-              </h3>
-              <p className="text-stone-500 text-sm">{event.time} 開始</p>
-              {event.registrationRequired && event.registrationLimit && (
-                <p className="text-stone-400 text-xs mt-0.5">
-                  {event.currentRegistrations}/{event.registrationLimit} 名額
-                </p>
-              )}
-            </div>
-            <button
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                event.currentRegistrations >= event.registrationLimit
-                  ? 'bg-stone-100 text-stone-400'
-                  : 'bg-red-50 text-red-700'
-              }`}
-              disabled={event.registrationRequired && event.currentRegistrations >= event.registrationLimit}
+      {events.length > 0 ? (
+        <div className="space-y-3">
+          {events.slice(0, 2).map((event: any) => (
+            <motion.div
+              key={event.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-xl p-4 shadow-sm border border-stone-100 flex items-center gap-4"
             >
-              {event.currentRegistrations >= event.registrationLimit ? '已滿' : '報名'}
-            </button>
-          </motion.div>
-        ))}
-      </div>
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex flex-col items-center justify-center text-white">
+                <span className="text-xs font-medium">
+                  {event.date.split("/")[1]}月
+                </span>
+                <span className="text-lg font-bold leading-none">
+                  {event.date.split("/")[2]}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-stone-800 truncate">
+                  {event.title}
+                </h3>
+                <p className="text-stone-500 text-sm">{event.time} 開始</p>
+                {event.registrationRequired && event.registrationLimit && (
+                  <p className="text-stone-400 text-xs mt-0.5">
+                    {event.currentRegistrations}/{event.registrationLimit} 名額
+                  </p>
+                )}
+              </div>
+              <button
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                  event.currentRegistrations >= event.registrationLimit
+                    ? 'bg-stone-100 text-stone-400'
+                    : 'bg-red-50 text-red-700'
+                }`}
+                disabled={event.registrationRequired && event.currentRegistrations >= event.registrationLimit}
+              >
+                {event.currentRegistrations >= event.registrationLimit ? '已滿' : '報名'}
+              </button>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div className="bg-gradient-to-br from-stone-50 to-stone-100 rounded-xl p-8 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-white rounded-full flex items-center justify-center shadow-md">
+            <svg className="w-8 h-8 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h3 className="font-medium text-stone-700 mb-2">目前暫無活動</h3>
+          <p className="text-sm text-stone-500">近期活動資訊將在此顯示</p>
+        </div>
+      )}
     </section>
 
     {/* Services Preview */}
     <section className="mt-8 px-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold text-stone-800">祈福服務</h2>
-        <button className="text-red-700 text-sm font-medium">查看全部</button>
+        {services.length > 0 && (
+          <button className="text-red-700 text-sm font-medium">查看全部</button>
+        )}
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        {services.slice(0, 4).map((service: any) => (
-          <motion.div
-            key={service.id}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl p-4 shadow-sm border border-stone-100"
-          >
-            <div className="text-3xl mb-2">{service.icon}</div>
-            <h3 className="font-bold text-stone-800">{service.name}</h3>
-            <p className="text-amber-600 font-medium text-sm mt-1">
-              ${service.price}
-              <span className="text-stone-400">/{service.unit}</span>
-            </p>
-          </motion.div>
-        ))}
-      </div>
+      {services.length > 0 ? (
+        <div className="grid grid-cols-2 gap-3">
+          {services.slice(0, 4).map((service: any) => (
+            <motion.div
+              key={service.id}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-xl p-4 shadow-sm border border-stone-100"
+            >
+              <div className="text-3xl mb-2">{service.icon}</div>
+              <h3 className="font-bold text-stone-800">{service.name}</h3>
+              <p className="text-amber-600 font-medium text-sm mt-1">
+                ${service.price}
+                <span className="text-stone-400">/{service.unit}</span>
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div className="bg-gradient-to-br from-stone-50 to-stone-100 rounded-xl p-8 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-white rounded-full flex items-center justify-center shadow-md">
+            <svg className="w-8 h-8 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 className="font-medium text-stone-700 mb-2">線上祈福服務準備中</h3>
+          <p className="text-sm text-stone-500">歡迎直接蒞臨本廟參拜</p>
+        </div>
+      )}
     </section>
 
     {/* Contact - Only show if any contact info exists */}
@@ -606,49 +757,55 @@ const MobileHome = ({ temple, events, services }: any) => {
   );
 };
 
-const MobileServices = ({ services }: any) => (
-  <div className="px-4 py-6">
-    <h2 className="text-xl font-bold text-stone-800 mb-2">祈福服務</h2>
-    <p className="text-stone-500 text-sm mb-6">線上登記，方便快速</p>
+// MobileServices is now replaced by TempleServicesDisplay component
+// Removed to avoid duplicate functionality
 
-    {/* Donation Banner */}
-    <div className="bg-gradient-to-r from-amber-400 to-amber-500 rounded-2xl p-5 mb-6 shadow-lg">
-      <div className="flex items-center gap-4">
-        <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-3xl">
-          💰
-        </div>
-        <div className="flex-1">
-          <h3 className="text-stone-900 font-bold text-lg">線上香油錢</h3>
-          <p className="text-stone-800/70 text-sm">隨喜捐獻，功德無量</p>
-        </div>
-        <button className="px-4 py-2 bg-stone-900 text-white rounded-xl font-medium">
-          捐獻
-        </button>
-      </div>
-    </div>
-
-    <div className="space-y-3">
-      {services.map((service: any) => (
-        <ServiceCard key={service.id} service={service} />
-      ))}
-    </div>
-  </div>
-);
-
-const MobileEvents = ({ events }: any) => (
+const MobileEvents = ({ events, temple }: any) => (
   <div className="px-4 py-6">
     <h2 className="text-xl font-bold text-stone-800 mb-2">法會活動</h2>
     <p className="text-stone-500 text-sm mb-6">歡迎信眾報名參加</p>
-    <div className="space-y-4">
-      {events.map((event: any) => (
-        <EventCard key={event.id} event={event} />
-      ))}
-    </div>
+    {events.length > 0 ? (
+      <div className="space-y-4">
+        {events.map((event: any) => (
+          <EventCard key={event.id} event={event} />
+        ))}
+      </div>
+    ) : (
+      <div className="bg-gradient-to-br from-red-50 via-white to-amber-50 rounded-2xl p-8 text-center border border-red-100/50 shadow-lg">
+        <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-red-100 to-amber-100 rounded-full flex items-center justify-center shadow-md">
+          <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <h3 className="text-xl font-bold bg-gradient-to-r from-red-700 to-amber-700 bg-clip-text text-transparent mb-3">
+          目前暫無活動
+        </h3>
+        <p className="text-stone-600 mb-6 text-base">
+          近期法會活動資訊將在此公布
+        </p>
+
+        <div className="bg-white/80 backdrop-blur rounded-xl p-6 space-y-3 border border-red-100/30">
+          <p className="text-stone-700 text-sm">歡迎關注本廟最新消息</p>
+          {temple?.phone && (
+            <div className="flex items-center justify-center gap-2 text-stone-600">
+              <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              </svg>
+              <span className="text-sm">洽詢專線：{temple.phone}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
   </div>
 );
 
 const MobileAbout = ({ temple, gallery }: any) => {
   const currentYear = new Date().getFullYear();
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+
   return (
     <div className="pb-8">
       {/* Hero with Cover Image or Gradient Fallback */}
@@ -686,9 +843,6 @@ const MobileAbout = ({ temple, gallery }: any) => {
       <section className="px-4 py-6">
         <h2 className="text-lg font-bold text-stone-800 mb-3">關於本宮</h2>
         <p className="text-stone-600 leading-relaxed">
-          {temple.intro || "歡迎來到" + temple.name}
-        </p>
-        <p className="text-stone-600 leading-relaxed mt-4">
           {temple.fullDescription}
         </p>
       </section>
@@ -699,7 +853,8 @@ const MobileAbout = ({ temple, gallery }: any) => {
           {gallery.slice(0, 4).map((img: any, i: number) => (
             <div
               key={i}
-              className={`rounded-xl overflow-hidden ${
+              onClick={() => setSelectedImageIndex(i)}
+              className={`rounded-xl overflow-hidden cursor-pointer transition-transform hover:scale-105 ${
                 i === 0 ? "col-span-2 h-40" : "h-32"
               }`}
             >
@@ -712,6 +867,15 @@ const MobileAbout = ({ temple, gallery }: any) => {
           ))}
         </div>
       </section>
+
+      {/* Gallery Modal */}
+      {selectedImageIndex !== null && (
+        <GalleryModal
+          images={gallery}
+          selectedIndex={selectedImageIndex}
+          onClose={() => setSelectedImageIndex(null)}
+        />
+      )}
 
       {/* Social Media Section - Only show if at least one social media exists */}
       {(temple.facebook_url || temple.line_id || temple.instagram_url) && (
@@ -769,6 +933,7 @@ const MobileAbout = ({ temple, gallery }: any) => {
 const DesktopHome = ({ temple, events, services, gallery }: any) => {
   const currentYear = new Date().getFullYear();
   const [copiedAddress, setCopiedAddress] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
   const handleCopyAddress = (address: string) => {
     navigator.clipboard.writeText(address);
@@ -889,12 +1054,15 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
             <section>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-stone-800">近期活動</h2>
-                <button className="text-red-700 font-medium hover:underline">
-                  查看全部活動 →
-                </button>
+                {events.length > 0 && (
+                  <button className="text-red-700 font-medium hover:underline">
+                    查看全部活動 →
+                  </button>
+                )}
               </div>
-              <div className="grid md:grid-cols-2 gap-4">
-                {events.slice(0, 2).map((event: any) => (
+              {events.length > 0 ? (
+                <div className="grid md:grid-cols-2 gap-4">
+                  {events.slice(0, 2).map((event: any) => (
                   <motion.div
                     key={event.id}
                     whileHover={{ y: -4 }}
@@ -954,20 +1122,34 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
                       </button>
                     </div>
                   </motion.div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-gradient-to-br from-stone-50 to-stone-100 rounded-xl p-12 text-center">
+                  <div className="w-20 h-20 mx-auto mb-4 bg-white rounded-full flex items-center justify-center shadow-md">
+                    <svg className="w-10 h-10 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-stone-700 mb-2">目前暫無活動</h3>
+                  <p className="text-stone-500">近期活動資訊將在此顯示</p>
+                </div>
+              )}
             </section>
 
             {/* Services Section */}
             <section>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-stone-800">祈福服務</h2>
-                <button className="text-red-700 font-medium hover:underline">
-                  查看全部服務 →
-                </button>
+                {services.length > 0 && (
+                  <button className="text-red-700 font-medium hover:underline">
+                    查看全部服務 →
+                  </button>
+                )}
               </div>
-              <div className="grid md:grid-cols-3 gap-4">
-                {services.slice(0, 6).map((service: any) => (
+              {services.length > 0 ? (
+                <div className="grid md:grid-cols-3 gap-4">
+                  {services.slice(0, 6).map((service: any) => (
                   <motion.div
                     key={service.id}
                     whileHover={{ y: -4 }}
@@ -1001,8 +1183,19 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
                       </button>
                     </div>
                   </motion.div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-gradient-to-br from-stone-50 to-stone-100 rounded-xl p-12 text-center">
+                  <div className="w-20 h-20 mx-auto mb-4 bg-white rounded-full flex items-center justify-center shadow-md">
+                    <svg className="w-10 h-10 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-stone-700 mb-2">線上祈福服務準備中</h3>
+                  <p className="text-stone-500">歡迎直接蒞臨本廟參拜</p>
+                </div>
+              )}
             </section>
 
             {/* Gallery Preview */}
@@ -1018,6 +1211,7 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
                   <motion.div
                     key={i}
                     whileHover={{ scale: 1.05 }}
+                    onClick={() => setSelectedImageIndex(i)}
                     className={`rounded-2xl overflow-hidden cursor-pointer transition-opacity ${
                       i === 0 ? "col-span-2 row-span-2 h-64" : "h-[120px]"
                     }`}
@@ -1035,25 +1229,35 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
 
           {/* Right Column - Sidebar */}
           <div className="space-y-6">
-            {/* Donation Card */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-gradient-to-br from-amber-400 to-amber-500 rounded-2xl p-6 shadow-xl"
-            >
-              <div className="text-center">
-                <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">
-                  💰
+            {/* Donation Card - Only show if donations are enabled */}
+            {temple.donation_settings?.is_enabled && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-gradient-to-br from-amber-400 to-amber-500 rounded-2xl p-6 shadow-xl"
+              >
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">
+                    💰
+                  </div>
+                  <h3 className="text-stone-900 font-bold text-xl mb-2">
+                    線上香油錢
+                  </h3>
+                  <p className="text-stone-800/70 mb-4">
+                    {temple.donation_settings.custom_message || "隨喜捐獻，功德無量"}
+                  </p>
+                  <button
+                    onClick={() => {
+                      // Navigate to donation page or open modal
+                      window.location.href = `/temple/${temple.slug}/donate`;
+                    }}
+                    className="w-full py-3 bg-stone-900 text-white rounded-xl font-medium hover:bg-stone-800 transition-colors"
+                  >
+                    立即捐獻
+                  </button>
                 </div>
-                <h3 className="text-stone-900 font-bold text-xl mb-2">
-                  線上香油錢
-                </h3>
-                <p className="text-stone-800/70 mb-4">隨喜捐獻，功德無量</p>
-                <button className="w-full py-3 bg-stone-900 text-white rounded-xl font-medium hover:bg-stone-800 transition-colors">
-                  立即捐獻
-                </button>
-              </div>
-            </motion.div>
+              </motion.div>
+            )}
 
             {/* Contact Info - Only show if any contact info exists */}
             {(temple.address || temple.hours || temple.phone || temple.email) && (
@@ -1167,6 +1371,15 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
         </div>
       </div>
 
+      {/* Gallery Modal */}
+      {selectedImageIndex !== null && (
+        <GalleryModal
+          images={gallery}
+          selectedIndex={selectedImageIndex}
+          onClose={() => setSelectedImageIndex(null)}
+        />
+      )}
+
       {/* Footer */}
       <footer className="bg-stone-900 text-white py-12">
         <div className="max-w-6xl mx-auto px-6">
@@ -1207,81 +1420,19 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
   );
 };
 
-const DesktopServices = ({ services }: any) => (
-  <div className="max-w-6xl mx-auto px-6 py-12">
-    <div className="text-center mb-12">
-      <h1 className="text-3xl font-bold text-stone-800 mb-3">祈福服務</h1>
-      <p className="text-stone-500 text-lg">誠心祈願，功德圓滿</p>
-    </div>
+// DesktopServices is now replaced by TempleServicesDisplay component
+// Removed to avoid duplicate functionality
 
-    {/* Donation Banner */}
-    <div className="bg-gradient-to-r from-amber-400 to-amber-500 rounded-3xl p-8 mb-12 shadow-xl">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center text-4xl">
-            💰
-          </div>
-          <div>
-            <h2 className="text-stone-900 font-bold text-2xl">線上香油錢</h2>
-            <p className="text-stone-800/70 mt-1">
-              隨喜捐獻，累積功德，護持道場
-            </p>
-          </div>
-        </div>
-        <button className="px-8 py-4 bg-stone-900 text-white rounded-2xl font-medium text-lg hover:bg-stone-800 transition-colors">
-          立即捐獻
-        </button>
-      </div>
-    </div>
-
-    {/* Services Grid */}
-    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {services.map((service: any) => (
-        <motion.div
-          key={service.id}
-          whileHover={{ y: -4 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100 hover:shadow-lg transition-all group"
-        >
-          <div className="flex items-start justify-between mb-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-100 to-amber-100 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
-              {service.icon}
-            </div>
-            {service.popular && (
-              <span className="px-3 py-1 bg-amber-100 text-amber-700 text-sm font-medium rounded-full">
-                熱門
-              </span>
-            )}
-          </div>
-          <h3 className="font-bold text-stone-800 text-xl mb-2">
-            {service.name}
-          </h3>
-          <p className="text-stone-500 mb-4">{service.desc}</p>
-          <div className="flex items-center justify-between pt-4 border-t border-stone-100">
-            <p className="text-amber-600 font-bold text-2xl">
-              ${service.price}
-              <span className="text-stone-400 font-normal text-base">
-                /{service.unit}
-              </span>
-            </p>
-            <button className="px-6 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors">
-              立即登記
-            </button>
-          </div>
-        </motion.div>
-      ))}
-    </div>
-  </div>
-);
-
-const DesktopEvents = ({ events }: any) => (
+const DesktopEvents = ({ events, temple }: any) => (
   <div className="max-w-6xl mx-auto px-6 py-12">
     <div className="text-center mb-12">
       <h1 className="text-3xl font-bold text-stone-800 mb-3">法會活動</h1>
       <p className="text-stone-500 text-lg">歡迎十方信眾蒞臨參加</p>
     </div>
 
-    <div className="space-y-6">
-      {events.map((event: any) => (
+    {events.length > 0 ? (
+      <div className="space-y-6">
+        {events.map((event: any) => (
         <motion.div
           key={event.id}
           whileHover={{ x: 4 }}
@@ -1323,13 +1474,52 @@ const DesktopEvents = ({ events }: any) => (
             </div>
           </div>
         </motion.div>
-      ))}
-    </div>
+        ))}
+      </div>
+    ) : (
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-gradient-to-br from-red-50 via-white to-amber-50 rounded-3xl p-12 md:p-16 text-center border border-red-100/50 shadow-xl">
+          <div className="w-28 h-28 mx-auto mb-8 bg-gradient-to-br from-red-100 to-amber-100 rounded-full flex items-center justify-center shadow-lg">
+            <svg className="w-14 h-14 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h3 className="text-3xl font-bold bg-gradient-to-r from-red-700 to-amber-700 bg-clip-text text-transparent mb-4">
+            目前暫無活動
+          </h3>
+          <p className="text-stone-600 mb-10 text-lg max-w-xl mx-auto">
+            近期法會活動資訊將在此公布，歡迎隨時關注本廟最新消息
+          </p>
+
+          <div className="bg-white/80 backdrop-blur rounded-2xl p-8 space-y-6 border border-red-100/30 max-w-2xl mx-auto">
+            <div className="flex items-center justify-center gap-4 text-stone-700">
+              <svg className="w-6 h-6 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              <span className="text-lg">歡迎蒞臨本廟參與各項法會活動</span>
+            </div>
+
+            {temple?.phone && (
+              <div className="flex items-center justify-center gap-4 text-stone-700">
+                <svg className="w-6 h-6 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+                <span className="text-lg">活動洽詢專線：{temple.phone}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )}
   </div>
 );
 
 const DesktopAbout = ({ temple, gallery }: any) => {
   const [copiedAddress, setCopiedAddress] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
   const handleCopyAddress = (address: string) => {
     navigator.clipboard.writeText(address);
@@ -1379,9 +1569,6 @@ const DesktopAbout = ({ temple, gallery }: any) => {
             <h2 className="text-2xl font-bold text-stone-800 mb-4">關於本宮</h2>
             <div className="prose prose-stone max-w-none">
               <p className="text-stone-600 leading-relaxed text-lg">
-                {temple.intro || "歡迎來到" + temple.name}
-              </p>
-              <p className="text-stone-600 leading-relaxed text-lg mt-4">
                 {temple.fullDescription}
               </p>
             </div>
@@ -1394,6 +1581,7 @@ const DesktopAbout = ({ temple, gallery }: any) => {
                 <motion.div
                   key={i}
                   whileHover={{ scale: 1.05 }}
+                  onClick={() => setSelectedImageIndex(i)}
                   className={`rounded-2xl overflow-hidden cursor-pointer transition-opacity ${
                     i === 0 ? "col-span-2 row-span-2 h-80" : "h-40"
                   }`}
@@ -1552,6 +1740,15 @@ const DesktopAbout = ({ temple, gallery }: any) => {
         </div>
       </div>
     </div>
+
+    {/* Gallery Modal */}
+    {selectedImageIndex !== null && (
+      <GalleryModal
+        images={gallery}
+        selectedIndex={selectedImageIndex}
+        onClose={() => setSelectedImageIndex(null)}
+      />
+    )}
   </div>
   );
 };
@@ -1560,30 +1757,8 @@ const DesktopAbout = ({ temple, gallery }: any) => {
 // SHARED COMPONENTS
 // =============================================
 
-const ServiceCard = ({ service }: any) => (
-  <div className="bg-white rounded-xl p-4 shadow-sm border border-stone-100">
-    <div className="flex items-start gap-4">
-      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-red-100 to-amber-100 flex items-center justify-center text-2xl">
-        {service.icon}
-      </div>
-      <div className="flex-1">
-        <div className="flex items-center justify-between">
-          <h3 className="font-bold text-stone-800">{service.name}</h3>
-          <p className="text-amber-600 font-bold">
-            ${service.price}
-            <span className="text-stone-400 font-normal text-sm">
-              /{service.unit}
-            </span>
-          </p>
-        </div>
-        <p className="text-stone-500 text-sm mt-1">{service.desc}</p>
-        <button className="mt-3 w-full py-2 bg-red-50 text-red-700 rounded-lg font-medium hover:bg-red-100 transition-colors">
-          立即登記
-        </button>
-      </div>
-    </div>
-  </div>
-);
+// ServiceCard is no longer used - replaced by TempleServicesDisplay
+// Removed to avoid duplicate functionality
 
 const EventCard = ({ event }: any) => (
   <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-stone-100">

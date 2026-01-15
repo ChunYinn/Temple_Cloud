@@ -57,6 +57,6 @@ export function useImageValidation(maxSize: number = UPLOAD_CONFIG.MAX_FILE_SIZE
     validateAndAlert,
     validateMultiple,
     maxSize,
-    allowedFormats: UPLOAD_CONFIG.ALLOWED_IMAGE_TYPES,
+    allowedFormats: UPLOAD_CONFIG.ALLOWED_FORMATS,
   };
 }

@@ -16,10 +16,11 @@ import {
 } from 'lucide-react';
 
 export default function TempleEventsPage() {
-  const { id } = useParams();
-  const [events, setEvents] = useState(MOCK_EVENTS);
+  const params = useParams();
+  const templeId = params.id as string;
+  const [events] = useState(MOCK_EVENTS);
   const [showNewEventForm, setShowNewEventForm] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<any>(null);
+  const [, setEditingEvent] = useState<any>(null);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -213,10 +214,11 @@ export default function TempleEventsPage() {
             <div className="p-6">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1">
+                  <label htmlFor="event-name" className="block text-sm font-medium text-stone-700 mb-1">
                     活動名稱
                   </label>
                   <input
+                    id="event-name"
                     type="text"
                     className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                     placeholder="例：觀音誕辰祈福法會"
@@ -225,19 +227,21 @@ export default function TempleEventsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-stone-700 mb-1">
+                    <label htmlFor="event-date" className="block text-sm font-medium text-stone-700 mb-1">
                       日期
                     </label>
                     <input
+                      id="event-date"
                       type="date"
                       className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-stone-700 mb-1">
+                    <label htmlFor="event-time" className="block text-sm font-medium text-stone-700 mb-1">
                       時間
                     </label>
                     <input
+                      id="event-time"
                       type="time"
                       className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                     />
@@ -245,10 +249,11 @@ export default function TempleEventsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1">
+                  <label htmlFor="event-location" className="block text-sm font-medium text-stone-700 mb-1">
                     地點
                   </label>
                   <input
+                    id="event-location"
                     type="text"
                     className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                     placeholder="例：大雄寶殿"
@@ -256,7 +261,7 @@ export default function TempleEventsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1">
+                  <label htmlFor="event-image" className="block text-sm font-medium text-stone-700 mb-1">
                     活動圖片
                   </label>
                   <div className="border-2 border-dashed border-stone-300 rounded-lg p-8 text-center hover:border-stone-400 transition-colors cursor-pointer">
@@ -267,10 +272,11 @@ export default function TempleEventsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1">
+                  <label htmlFor="event-desc" className="block text-sm font-medium text-stone-700 mb-1">
                     簡短描述
                   </label>
                   <textarea
+                    id="event-desc"
                     className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                     rows={3}
                     placeholder="活動的簡短介紹..."
@@ -278,7 +284,7 @@ export default function TempleEventsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1">
+                  <label htmlFor="event-detail" className="block text-sm font-medium text-stone-700 mb-1">
                     詳細說明
                   </label>
                   <div className="border border-stone-200 rounded-lg">
@@ -289,6 +295,7 @@ export default function TempleEventsPage() {
                       <button className="px-3 py-1 hover:bg-stone-100 rounded">•</button>
                     </div>
                     <textarea
+                      id="event-detail"
                       className="w-full px-3 py-2 focus:outline-none"
                       rows={8}
                       placeholder="活動流程、注意事項等詳細說明..."
@@ -298,13 +305,14 @@ export default function TempleEventsPage() {
 
                 <div className="flex items-center gap-4">
                   <label className="flex items-center gap-2">
-                    <input type="checkbox" className="rounded border-stone-300 text-red-600 focus:ring-red-500" />
+                    <input id="require-register" type="checkbox" className="rounded border-stone-300 text-red-600 focus:ring-red-500" />
                     <span className="text-sm font-medium text-stone-700">需要報名</span>
                   </label>
 
                   <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium text-stone-700">人數限制:</label>
+                    <label htmlFor="event-limit" className="text-sm font-medium text-stone-700">人數限制:</label>
                     <input
+                      id="event-limit"
                       type="number"
                       className="w-24 px-3 py-1 border border-stone-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                       placeholder="100"

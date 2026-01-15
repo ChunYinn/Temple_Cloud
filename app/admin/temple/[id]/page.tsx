@@ -19,7 +19,6 @@ export default async function TemplePage({
   // Get current date for stats calculation
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
   // Get temple data with authorization check and include related data
   const temple = await prisma.temples.findFirst({

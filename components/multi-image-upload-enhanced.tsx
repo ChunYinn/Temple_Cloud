@@ -156,69 +156,90 @@ export function MultiImageUploadEnhanced({
     }
   }, [currentProcessingIndex, imagesToProcess, processedImages]);
 
+  // Helper function to upload a single file
+  const uploadSingleFile = async (file: File, index: number): Promise<{ url?: string; error?: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('templeId', templeId);
+    formData.append('type', 'gallery');
+
+    try {
+      const response = await fetch('/api/upload/gallery', {
+        method: 'POST',
+        body: formData,
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        return { url: result.photoUrl };
+      }
+      return { error: `圖片 ${index + 1}: ${result.error || '上傳失敗'}` };
+    } catch {
+      return { error: `圖片 ${index + 1}: 上傳失敗` };
+    }
+  };
+
+  // Helper function to delete old images
+  const deleteOldImages = async (urls: string[]): Promise<void> => {
+    for (const oldUrl of urls) {
+      try {
+        await fetch(
+          `/api/upload/gallery?templeId=${templeId}&photoUrl=${encodeURIComponent(oldUrl)}`,
+          { method: 'DELETE' }
+        );
+      } catch (err) {
+        console.error('Failed to delete old image:', err);
+      }
+    }
+  };
+
+  // Helper function to update images state
+  const updateImagesState = (uploadedUrls: string[], replaceIndex?: number): void => {
+    let newImages: string[];
+
+    if (replaceIndex !== undefined) {
+      newImages = [...images];
+      newImages[replaceIndex] = uploadedUrls[0];
+    } else {
+      newImages = [...images, ...uploadedUrls];
+    }
+
+    setImages(newImages);
+    onImagesUpdate(newImages);
+  };
+
   // Upload all processed images
   const uploadProcessedImages = async (files: File[], replaceIndex?: number) => {
     setUploading(true);
     setErrors([]);
-    const newErrors: string[] = [];
+
     const uploadedUrls: string[] = [];
+    const newErrors: string[] = [];
     const oldImagesToDelete: string[] = [];
 
     try {
-      // If replacing, store the old image URL for deletion
+      // Store old image for deletion if replacing
       if (replaceIndex !== undefined && images[replaceIndex]) {
         oldImagesToDelete.push(images[replaceIndex]);
       }
 
       // Upload all files
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('templeId', templeId);
-        formData.append('type', 'gallery');
-
-        const response = await fetch('/api/upload/gallery', {
-          method: 'POST',
-          body: formData,
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          uploadedUrls.push(result.photoUrl);
-        } else {
-          newErrors.push(`圖片 ${i + 1}: ${result.error || '上傳失敗'}`);
+        const result = await uploadSingleFile(files[i], i);
+        if (result.url) {
+          uploadedUrls.push(result.url);
+        } else if (result.error) {
+          newErrors.push(result.error);
         }
       }
 
+      // Update state if uploads successful
       if (uploadedUrls.length > 0) {
-        let newImages: string[];
+        updateImagesState(uploadedUrls, replaceIndex);
 
-        if (replaceIndex !== undefined) {
-          // Replace specific image
-          newImages = [...images];
-          newImages[replaceIndex] = uploadedUrls[0];
-        } else {
-          // Add new images
-          newImages = [...images, ...uploadedUrls];
-        }
-
-        setImages(newImages);
-        onImagesUpdate(newImages);
-
-        // Delete old images after successful upload (last step)
+        // Delete old images after successful upload
         if (oldImagesToDelete.length > 0) {
-          for (const oldUrl of oldImagesToDelete) {
-            try {
-              await fetch(
-                `/api/upload/gallery?templeId=${templeId}&photoUrl=${encodeURIComponent(oldUrl)}`,
-                { method: 'DELETE' }
-              );
-            } catch (err) {
-              console.error('Failed to delete old image:', err);
-            }
-          }
+          await deleteOldImages(oldImagesToDelete);
         }
       }
 

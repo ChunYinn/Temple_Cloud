@@ -36,8 +36,8 @@ export async function GET(
     const search = searchParams.get('search');
     const status = searchParams.get('status');
     const dateFilter = searchParams.get('dateFilter');
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const page = Number.parseInt(searchParams.get('page') || '1', 10);
+    const limit = Number.parseInt(searchParams.get('limit') || '10', 10);
 
     // Build where clause
     const where: any = {
