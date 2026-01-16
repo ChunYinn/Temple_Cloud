@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { PRAYER_SERVICES, SERVICE_ICONS } from '@/lib/prayer-form/services';
 import { ServiceCode } from '@/lib/prayer-form/types';
+import { usePrayerServices, useUpdatePrayerServices } from '@/lib/hooks/use-temple-data';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { AlertCircle, Save, Settings, DollarSign, Users, Check, Sparkles, Info, Bold, Italic, List } from 'lucide-react';
+import { AlertCircle, Save, Settings, DollarSign, Users, Check, Sparkles, Info, Bold, Italic, List, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/lib/toast-context';
 
@@ -32,7 +33,7 @@ interface DonationSetting {
   allowCustomAmount: boolean;
   allowAnonymous: boolean;
   customMessage?: string;
-  receiptEnabled: boolean;
+  receiptEnabled?: boolean;
 }
 
 interface PrayerServicesManagementProps {
@@ -43,16 +44,18 @@ interface PrayerServicesManagementProps {
   }) => Promise<void>;
 }
 
-export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesManagementProps) {
+export function PrayerServicesManagementOptimized({ templeId, onSave }: PrayerServicesManagementProps) {
   const { success, error: showError } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Prayer services settings
+  // Use React Query hooks for data fetching and mutation
+  const { data, isLoading, error } = usePrayerServices(templeId);
+  const updateMutation = useUpdatePrayerServices(templeId);
+
+  // Prayer services settings (local state for form editing)
   const [serviceSettings, setServiceSettings] = useState<PrayerServiceSetting[]>([]);
 
-  // Donation settings
+  // Donation settings (local state for form editing)
   const [donationSettings, setDonationSettings] = useState<DonationSetting>({
     isEnabled: true,
     minAmount: 100,
@@ -66,44 +69,37 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
   // Predefined amount options for easy selection
   const PRESET_AMOUNTS = [100, 300, 500, 1000, 2000, 3000, 5000, 10000];
 
-  // Initialize settings
+  // Initialize form state when data is loaded
   useEffect(() => {
-    initializeSettings();
-    loadExistingSettings();
-  }, [templeId]);
+    if (data) {
+      // Initialize services from fetched data or defaults
+      const initialSettings: PrayerServiceSetting[] = Object.values(ServiceCode).map(code => {
+        const service = PRAYER_SERVICES[code as ServiceCode];
+        const fetchedService = data.services?.find(s => s.serviceCode === code);
 
-  const initializeSettings = () => {
-    // Initialize with all available services including descriptions
-    const initialSettings: PrayerServiceSetting[] = Object.values(ServiceCode).map(code => {
-      const service = PRAYER_SERVICES[code as ServiceCode];
-      return {
-        serviceCode: code as ServiceCode,
-        isEnabled: false,
-        customPrice: service?.unitPrice || 800,
-        maxQuantity: undefined,
-        annualLimit: undefined,
-        currentCount: 0,
-        description: service?.longDescription || '',
-        specialNote: service?.specialNote || ''
-      };
-    });
-    setServiceSettings(initialSettings);
-  };
+        return {
+          serviceCode: code as ServiceCode,
+          isEnabled: fetchedService?.isEnabled || false,
+          customPrice: fetchedService?.customPrice || service?.unitPrice || 800,
+          maxQuantity: fetchedService?.maxQuantity || undefined,
+          annualLimit: fetchedService?.annualLimit || undefined,
+          currentCount: fetchedService?.currentCount || 0,
+          description: fetchedService?.description || service?.longDescription || '',
+          specialNote: fetchedService?.specialNote || service?.specialNote || ''
+        };
+      });
 
-  const loadExistingSettings = async () => {
-    setIsLoading(true);
-    try {
-      // TODO: Load existing settings from API
-      // const response = await fetch(`/api/temples/${templeId}/prayer-services`);
-      // const data = await response.json();
-      // setServiceSettings(data.prayerServices);
-      // setDonationSettings(data.donation);
-    } catch (error) {
-      console.error('Failed to load settings:', error);
-    } finally {
-      setIsLoading(false);
+      setServiceSettings(initialSettings);
+
+      // Set donation settings from fetched data
+      if (data.donation) {
+        setDonationSettings({
+          ...data.donation,
+          receiptEnabled: true // Default value if not in API
+        });
+      }
     }
-  };
+  }, [data]);
 
   const handleServiceToggle = (serviceCode: ServiceCode, enabled: boolean) => {
     setServiceSettings(prev => prev.map(s =>
@@ -139,31 +135,48 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
   };
 
   const handleSave = async () => {
-    setIsSaving(true);
     try {
+      const dataToSave = {
+        services: serviceSettings,
+        donation: donationSettings
+      };
+
       if (onSave) {
-        await onSave({
-          prayerServices: serviceSettings,
-          donation: donationSettings
-        });
+        // Use provided onSave handler
+        await onSave(dataToSave);
+      } else {
+        // Use React Query mutation
+        await updateMutation.mutateAsync(dataToSave);
       }
+
       setHasChanges(false);
-      // Show success message using toast
       success('設定已儲存');
     } catch (error) {
       console.error('Failed to save settings:', error);
       showError('儲存失敗，請稍後再試');
-    } finally {
-      setIsSaving(false);
     }
   };
 
+  // Handle loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+          <Loader2 className="animate-spin h-12 w-12 text-red-600 mx-auto" />
           <p className="mt-4 text-stone-600">載入中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-600 mx-auto" />
+          <p className="mt-4 text-stone-800 font-medium">載入失敗</p>
+          <p className="text-sm text-stone-600 mt-1">請重新整理頁面或稍後再試</p>
         </div>
       </div>
     );
@@ -178,14 +191,18 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
         </div>
         <Button
           onClick={handleSave}
-          disabled={!hasChanges || isSaving}
+          disabled={!hasChanges || updateMutation.isPending}
           className={cn(
             "flex items-center gap-2",
             hasChanges ? "bg-green-600 hover:bg-green-700" : ""
           )}
         >
-          <Save className="w-4 h-4" />
-          {isSaving ? '儲存中...' : '儲存設定'}
+          {updateMutation.isPending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Save className="w-4 h-4" />
+          )}
+          {updateMutation.isPending ? '儲存中...' : '儲存設定'}
         </Button>
       </div>
 
@@ -212,7 +229,7 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
         </TabsList>
 
         <TabsContent value="services" className="space-y-4">
-          {/* Header Card for Services Tab - Consistent with Donation Tab */}
+          {/* Header Card for Services Tab */}
           <Card className="overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-red-50 to-red-100/50 border-b">
               <div className="flex items-center gap-3">
@@ -435,9 +452,9 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
                         </div>
 
                         <div>
-                          <Label htmlFor={`note-${setting.serviceCode}`} className="text-sm font-medium">
+                          <Label htmlFor={`note-${setting.serviceCode}`} className="text-base font-medium">
                             特別說明
-                            <span className="text-xs font-normal text-stone-500 ml-2">（選填）</span>
+                            <span className="text-sm font-normal text-stone-500 ml-2">（選填）</span>
                           </Label>
                           <Textarea
                             id={`note-${setting.serviceCode}`}
@@ -514,7 +531,7 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
 
             {donationSettings.isEnabled && (
               <CardContent className="p-6 space-y-8">
-                {/* Minimum Amount Section - Improved Design */}
+                {/* Minimum Amount Section */}
                 <div className="bg-gradient-to-br from-amber-50/50 to-orange-50/30 rounded-xl p-6 border border-amber-200/30">
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
@@ -549,7 +566,7 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
                   </div>
                 </div>
 
-                {/* Quick Amount Selection - Enhanced Visual */}
+                {/* Quick Amount Selection */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -604,7 +621,6 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
                     <span>信眾仍可自行輸入其他金額，不受限於以上選項</span>
                   </div>
                 </div>
-
 
                 {/* Thank You Message */}
                 <div className="space-y-3">

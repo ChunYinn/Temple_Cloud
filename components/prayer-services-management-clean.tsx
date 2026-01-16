@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { PRAYER_SERVICES, SERVICE_ICONS } from '@/lib/prayer-form/services';
 import { ServiceCode } from '@/lib/prayer-form/types';
+import { usePrayerServices, useUpdatePrayerServices } from '@/lib/hooks/use-temple-data-clean';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { AlertCircle, Save, Settings, DollarSign, Users, Check, Sparkles, Info, Bold, Italic, List } from 'lucide-react';
+import {
+  AlertCircle,
+  Save,
+  Settings,
+  DollarSign,
+  Users,
+  Check,
+  Sparkles,
+  Info,
+  Bold,
+  Italic,
+  List,
+  Loader2
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/lib/toast-context';
 
@@ -32,27 +46,26 @@ interface DonationSetting {
   allowCustomAmount: boolean;
   allowAnonymous: boolean;
   customMessage?: string;
-  receiptEnabled: boolean;
+  receiptEnabled?: boolean;
 }
 
 interface PrayerServicesManagementProps {
   templeId: string;
-  onSave?: (settings: {
-    prayerServices: PrayerServiceSetting[];
-    donation: DonationSetting;
-  }) => Promise<void>;
 }
 
-export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesManagementProps) {
+// Predefined amount options
+const PRESET_AMOUNTS = [100, 300, 500, 1000, 2000, 3000, 5000, 10000];
+
+export function PrayerServicesManagementClean({ templeId }: PrayerServicesManagementProps) {
   const { success, error: showError } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Prayer services settings
-  const [serviceSettings, setServiceSettings] = useState<PrayerServiceSetting[]>([]);
+  // Use clean React Query hooks
+  const { data, isLoading, error } = usePrayerServices(templeId);
+  const updateMutation = useUpdatePrayerServices(templeId);
 
-  // Donation settings
+  // Local state for form editing
+  const [serviceSettings, setServiceSettings] = useState<PrayerServiceSetting[]>([]);
   const [donationSettings, setDonationSettings] = useState<DonationSetting>({
     isEnabled: true,
     minAmount: 100,
@@ -63,47 +76,35 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
     receiptEnabled: true
   });
 
-  // Predefined amount options for easy selection
-  const PRESET_AMOUNTS = [100, 300, 500, 1000, 2000, 3000, 5000, 10000];
-
-  // Initialize settings
+  // Initialize form state from fetched data
   useEffect(() => {
-    initializeSettings();
-    loadExistingSettings();
-  }, [templeId]);
+    if (data) {
+      const initialSettings: PrayerServiceSetting[] = Object.values(ServiceCode).map(code => {
+        const service = PRAYER_SERVICES[code as ServiceCode];
+        const fetchedService = data.services?.find(s => s.serviceCode === code);
 
-  const initializeSettings = () => {
-    // Initialize with all available services including descriptions
-    const initialSettings: PrayerServiceSetting[] = Object.values(ServiceCode).map(code => {
-      const service = PRAYER_SERVICES[code as ServiceCode];
-      return {
-        serviceCode: code as ServiceCode,
-        isEnabled: false,
-        customPrice: service?.unitPrice || 800,
-        maxQuantity: undefined,
-        annualLimit: undefined,
-        currentCount: 0,
-        description: service?.longDescription || '',
-        specialNote: service?.specialNote || ''
-      };
-    });
-    setServiceSettings(initialSettings);
-  };
+        return {
+          serviceCode: code as ServiceCode,
+          isEnabled: fetchedService?.isEnabled || false,
+          customPrice: fetchedService?.customPrice || service?.unitPrice || 800,
+          maxQuantity: fetchedService?.maxQuantity || undefined,
+          annualLimit: fetchedService?.annualLimit || undefined,
+          currentCount: fetchedService?.currentCount || 0,
+          description: fetchedService?.description || service?.longDescription || '',
+          specialNote: fetchedService?.specialNote || service?.specialNote || ''
+        };
+      });
 
-  const loadExistingSettings = async () => {
-    setIsLoading(true);
-    try {
-      // TODO: Load existing settings from API
-      // const response = await fetch(`/api/temples/${templeId}/prayer-services`);
-      // const data = await response.json();
-      // setServiceSettings(data.prayerServices);
-      // setDonationSettings(data.donation);
-    } catch (error) {
-      console.error('Failed to load settings:', error);
-    } finally {
-      setIsLoading(false);
+      setServiceSettings(initialSettings);
+
+      if (data.donation) {
+        setDonationSettings({
+          ...data.donation,
+          receiptEnabled: true
+        });
+      }
     }
-  };
+  }, [data]);
 
   const handleServiceToggle = (serviceCode: ServiceCode, enabled: boolean) => {
     setServiceSettings(prev => prev.map(s =>
@@ -119,14 +120,22 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
     setHasChanges(true);
   };
 
-  const handleServiceLimitChange = (serviceCode: ServiceCode, field: 'maxQuantity' | 'annualLimit', value: number | undefined) => {
+  const handleServiceLimitChange = (
+    serviceCode: ServiceCode,
+    field: 'maxQuantity' | 'annualLimit',
+    value: number | undefined
+  ) => {
     setServiceSettings(prev => prev.map(s =>
       s.serviceCode === serviceCode ? { ...s, [field]: value } : s
     ));
     setHasChanges(true);
   };
 
-  const handleServiceDescriptionChange = (serviceCode: ServiceCode, field: 'description' | 'specialNote', value: string) => {
+  const handleServiceDescriptionChange = (
+    serviceCode: ServiceCode,
+    field: 'description' | 'specialNote',
+    value: string
+  ) => {
     setServiceSettings(prev => prev.map(s =>
       s.serviceCode === serviceCode ? { ...s, [field]: value } : s
     ));
@@ -139,31 +148,72 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
   };
 
   const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      if (onSave) {
-        await onSave({
-          prayerServices: serviceSettings,
-          donation: donationSettings
-        });
-      }
-      setHasChanges(false);
-      // Show success message using toast
-      success('設定已儲存');
-    } catch (error) {
-      console.error('Failed to save settings:', error);
-      showError('儲存失敗，請稍後再試');
-    } finally {
-      setIsSaving(false);
+    const dataToSave = {
+      services: serviceSettings,
+      donation: donationSettings
+    };
+
+    // Mutation already handles success/error toast via the hook
+    await updateMutation.mutateAsync(dataToSave);
+    setHasChanges(false);
+  };
+
+  // Insert markdown formatting helpers
+  const insertMarkdown = (
+    serviceCode: ServiceCode,
+    field: 'description' | 'specialNote',
+    format: 'bold' | 'italic' | 'list'
+  ) => {
+    const textarea = document.getElementById(`${field}-${serviceCode}`) as HTMLTextAreaElement;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selectedText = text.substring(start, end);
+
+    let newText = '';
+    switch (format) {
+      case 'bold':
+        newText = text.substring(0, start) + `**${selectedText}**` + text.substring(end);
+        break;
+      case 'italic':
+        newText = text.substring(0, start) + `*${selectedText}*` + text.substring(end);
+        break;
+      case 'list':
+        newText = text ? text + '\n• ' : '• ';
+        break;
     }
+
+    handleServiceDescriptionChange(serviceCode, field, newText);
+
+    // Restore focus and cursor position
+    setTimeout(() => {
+      textarea.focus();
+      if (format === 'list') {
+        textarea.setSelectionRange(newText.length, newText.length);
+      }
+    }, 0);
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+          <Loader2 className="animate-spin h-12 w-12 text-red-600 mx-auto" />
           <p className="mt-4 text-stone-600">載入中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-600 mx-auto" />
+          <p className="mt-4 text-stone-800 font-medium">載入失敗</p>
+          <p className="text-sm text-stone-600 mt-1">請重新整理頁面或稍後再試</p>
         </div>
       </div>
     );
@@ -178,14 +228,18 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
         </div>
         <Button
           onClick={handleSave}
-          disabled={!hasChanges || isSaving}
+          disabled={!hasChanges || updateMutation.isPending}
           className={cn(
             "flex items-center gap-2",
             hasChanges ? "bg-green-600 hover:bg-green-700" : ""
           )}
         >
-          <Save className="w-4 h-4" />
-          {isSaving ? '儲存中...' : '儲存設定'}
+          {updateMutation.isPending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Save className="w-4 h-4" />
+          )}
+          {updateMutation.isPending ? '儲存中...' : '儲存設定'}
         </Button>
       </div>
 
@@ -212,7 +266,6 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
         </TabsList>
 
         <TabsContent value="services" className="space-y-4">
-          {/* Header Card for Services Tab - Consistent with Donation Tab */}
           <Card className="overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-red-50 to-red-100/50 border-b">
               <div className="flex items-center gap-3">
@@ -235,10 +288,15 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
               const icon = SERVICE_ICONS[setting.serviceCode];
 
               return (
-                <Card key={setting.serviceCode} className={cn(
-                  "transition-all overflow-hidden",
-                  setting.isEnabled ? "border-red-200 bg-gradient-to-br from-red-50/50 to-orange-50/30 shadow-sm" : "hover:shadow-sm"
-                )}>
+                <Card
+                  key={setting.serviceCode}
+                  className={cn(
+                    "transition-all overflow-hidden",
+                    setting.isEnabled
+                      ? "border-red-200 bg-gradient-to-br from-red-50/50 to-orange-50/30 shadow-sm"
+                      : "hover:shadow-sm"
+                  )}
+                >
                   <CardHeader className={cn(
                     "transition-all",
                     setting.isEnabled && "bg-white/60"
@@ -355,7 +413,7 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
                       <div className="space-y-4 pt-4 border-t">
                         <div>
                           <div className="flex items-center justify-between mb-2">
-                            <Label htmlFor={`desc-${setting.serviceCode}`} className="text-sm font-medium">
+                            <Label htmlFor={`description-${setting.serviceCode}`} className="text-sm font-medium">
                               服務說明
                             </Label>
                             <div className="flex gap-1 bg-white rounded-lg border p-1">
@@ -363,17 +421,7 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
                                 type="button"
                                 className="p-1.5 hover:bg-stone-100 rounded transition-colors"
                                 title="粗體"
-                                onClick={() => {
-                                  const textarea = document.getElementById(`desc-${setting.serviceCode}`) as HTMLTextAreaElement;
-                                  if (textarea) {
-                                    const start = textarea.selectionStart;
-                                    const end = textarea.selectionEnd;
-                                    const text = textarea.value;
-                                    const selectedText = text.substring(start, end);
-                                    const newText = text.substring(0, start) + `**${selectedText}**` + text.substring(end);
-                                    handleServiceDescriptionChange(setting.serviceCode, 'description', newText);
-                                  }
-                                }}
+                                onClick={() => insertMarkdown(setting.serviceCode, 'description', 'bold')}
                               >
                                 <Bold className="w-3.5 h-3.5 text-stone-600" />
                               </button>
@@ -381,17 +429,7 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
                                 type="button"
                                 className="p-1.5 hover:bg-stone-100 rounded transition-colors"
                                 title="斜體"
-                                onClick={() => {
-                                  const textarea = document.getElementById(`desc-${setting.serviceCode}`) as HTMLTextAreaElement;
-                                  if (textarea) {
-                                    const start = textarea.selectionStart;
-                                    const end = textarea.selectionEnd;
-                                    const text = textarea.value;
-                                    const selectedText = text.substring(start, end);
-                                    const newText = text.substring(0, start) + `*${selectedText}*` + text.substring(end);
-                                    handleServiceDescriptionChange(setting.serviceCode, 'description', newText);
-                                  }
-                                }}
+                                onClick={() => insertMarkdown(setting.serviceCode, 'description', 'italic')}
                               >
                                 <Italic className="w-3.5 h-3.5 text-stone-600" />
                               </button>
@@ -399,25 +437,14 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
                                 type="button"
                                 className="p-1.5 hover:bg-stone-100 rounded transition-colors"
                                 title="項目符號"
-                                onClick={() => {
-                                  const textarea = document.getElementById(`desc-${setting.serviceCode}`) as HTMLTextAreaElement;
-                                  if (textarea) {
-                                    const text = textarea.value;
-                                    const newText = text ? text + '\n• ' : '• ';
-                                    handleServiceDescriptionChange(setting.serviceCode, 'description', newText);
-                                    setTimeout(() => {
-                                      textarea.focus();
-                                      textarea.setSelectionRange(newText.length, newText.length);
-                                    }, 0);
-                                  }
-                                }}
+                                onClick={() => insertMarkdown(setting.serviceCode, 'description', 'list')}
                               >
                                 <List className="w-3.5 h-3.5 text-stone-600" />
                               </button>
                             </div>
                           </div>
                           <Textarea
-                            id={`desc-${setting.serviceCode}`}
+                            id={`description-${setting.serviceCode}`}
                             value={setting.description || ''}
                             onChange={(e) => handleServiceDescriptionChange(setting.serviceCode, 'description', e.target.value)}
                             placeholder={serviceInfo.longDescription}
@@ -435,12 +462,12 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
                         </div>
 
                         <div>
-                          <Label htmlFor={`note-${setting.serviceCode}`} className="text-sm font-medium">
+                          <Label htmlFor={`specialNote-${setting.serviceCode}`} className="text-base font-medium">
                             特別說明
-                            <span className="text-xs font-normal text-stone-500 ml-2">（選填）</span>
+                            <span className="text-sm font-normal text-stone-500 ml-2">（選填）</span>
                           </Label>
                           <Textarea
-                            id={`note-${setting.serviceCode}`}
+                            id={`specialNote-${setting.serviceCode}`}
                             value={setting.specialNote || ''}
                             onChange={(e) => handleServiceDescriptionChange(setting.serviceCode, 'specialNote', e.target.value)}
                             placeholder={serviceInfo.specialNote || '例如：可搭配光明燈一同安奉（依廟方作法）'}
@@ -514,7 +541,7 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
 
             {donationSettings.isEnabled && (
               <CardContent className="p-6 space-y-8">
-                {/* Minimum Amount Section - Improved Design */}
+                {/* Minimum Amount Section */}
                 <div className="bg-gradient-to-br from-amber-50/50 to-orange-50/30 rounded-xl p-6 border border-amber-200/30">
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
@@ -525,7 +552,9 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
                         <Label htmlFor="min-donation-amount" className="text-lg font-semibold text-stone-800">
                           最低捐贈金額門檻
                         </Label>
-                        <p className="text-sm text-stone-600 mt-1">設定信眾捐贈的最低金額，信眾可自由輸入任何大於此金額的數目</p>
+                        <p className="text-sm text-stone-600 mt-1">
+                          設定信眾捐贈的最低金額，信眾可自由輸入任何大於此金額的數目
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 pl-11">
@@ -549,7 +578,7 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
                   </div>
                 </div>
 
-                {/* Quick Amount Selection - Enhanced Visual */}
+                {/* Quick Amount Selection */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -605,19 +634,18 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
                   </div>
                 </div>
 
-
                 {/* Thank You Message */}
                 <div className="space-y-3">
                   <Label htmlFor="custom-message" className="text-base font-medium">
                     感謝詞
                     <span className="text-sm font-normal text-stone-500 ml-2">（選填）</span>
                   </Label>
-                  <textarea
+                  <Textarea
                     id="custom-message"
                     value={donationSettings.customMessage || ''}
                     onChange={(e) => handleDonationChange('customMessage', e.target.value)}
                     placeholder="感謝您的慈悲捐贈，功德無量"
-                    className="w-full min-h-[80px] rounded-lg border border-stone-200 px-4 py-3 text-sm focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all resize-none"
+                    className="min-h-[80px] resize-none"
                   />
                   <p className="text-xs text-stone-500">將顯示在捐贈完成頁面</p>
                 </div>

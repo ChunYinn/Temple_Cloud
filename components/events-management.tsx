@@ -136,13 +136,13 @@ export function EventsManagement({ templeId }: { templeId: string }) {
     if (file) {
       // Validate file type
       if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
-        alert('請選擇有效的圖片格式 (JPG, PNG, WebP)');
+        showError('請選擇有效的圖片格式 (JPG, PNG, WebP)');
         return;
       }
 
       // Validate file size (5MB)
       if (file.size > 5 * 1024 * 1024) {
-        alert('圖片大小不可超過 5MB');
+        showError('圖片大小不可超過 5MB');
         return;
       }
 
@@ -151,7 +151,7 @@ export function EventsManagement({ templeId }: { templeId: string }) {
       setTempImageUrl(url);
       setShowImageCrop(true);
     }
-  }, []);
+  }, [showError]);
 
   // Handle image crop completion
   const handleImageCropComplete = useCallback((croppedBlob: Blob) => {
@@ -231,7 +231,7 @@ export function EventsManagement({ templeId }: { templeId: string }) {
         if (uploadResult.success) {
           finalImageUrl = uploadResult.imageUrl;
         } else {
-          alert(uploadResult.error || '圖片上傳失敗');
+          showError(uploadResult.error || '圖片上傳失敗');
           setSaving(false);
           return;
         }
