@@ -380,10 +380,8 @@ export function TempleServicesDisplay({
                       <Check className="w-4 h-4 mr-2" />
                       已選擇
                     </>
-                  ) : isEnabled ? (
-                    '選擇此服務'
                   ) : (
-                    '暫未開放'
+                    isEnabled ? '選擇此服務' : '暫未開放'
                   )}
                 </Button>
               </CardContent>
@@ -456,9 +454,7 @@ export function TempleServicesDisplay({
                   <Sparkles className="w-4 h-4 mr-2" />
                   我要捐贈
                 </>
-              ) : (
-                '暫未開放'
-              )}
+              ) : '暫未開放'}
             </Button>
           </CardContent>
         </Card>

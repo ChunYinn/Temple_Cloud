@@ -16,11 +16,10 @@ import {
 } from 'lucide-react';
 
 export default function TempleEventsPage() {
-  const params = useParams();
-  // const templeId = params.id as string; // Will be used when connecting to real API
-  const [events] = useState(MOCK_EVENTS);
+  useParams(); // Will be used when connecting to real API
+  const [events, setEvents] = useState(MOCK_EVENTS);
   const [showNewEventForm, setShowNewEventForm] = useState(false);
-  const [, setEditingEvent] = useState<any>(null);
+  const [editingEvent, setEditingEvent] = useState<any>(null);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">

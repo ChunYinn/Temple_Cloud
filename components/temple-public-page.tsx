@@ -236,7 +236,7 @@ export function TemplePublicPage({ temple }: { readonly temple: TempleData }) {
         currentRegistrations: event.current_registrations,
         registrationDeadline: event.registration_deadline
       }))
-    : []; // No mock data - show empty if no real events
+    : [];
 
   // Services are now handled by TempleServicesDisplay component
   const services: any[] = [];
@@ -244,7 +244,7 @@ export function TemplePublicPage({ temple }: { readonly temple: TempleData }) {
   // Use real gallery photos if available, otherwise use mock
   const gallery = temple.gallery_photos && temple.gallery_photos.length > 0
     ? temple.gallery_photos.map((url, index) => ({
-        id: index + 1,
+        id: `gallery-${temple.id}-${index}`,
         url,
         caption: `寺廟照片 ${index + 1}`,
         category: 'temple'
@@ -558,9 +558,9 @@ const MobileHome = ({ temple, events, services }: any) => {
     <div className="px-4 -mt-6 relative z-10">
       <div className="bg-white rounded-2xl shadow-lg p-4">
         <div className="grid grid-cols-4 gap-2">
-          {QUICK_ACTIONS.map((action, i) => (
+          {QUICK_ACTIONS.map((action) => (
             <motion.button
-              key={i}
+              key={action.label}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               className="flex flex-col items-center gap-1.5 group"
@@ -852,7 +852,7 @@ const MobileAbout = ({ temple, gallery }: any) => {
         <div className="grid grid-cols-2 gap-2">
           {gallery.slice(0, 4).map((img: any, i: number) => (
             <div
-              key={i}
+              key={img.id || `gallery-mobile-${i}`}
               onClick={() => setSelectedImageIndex(i)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -1017,9 +1017,9 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
                   label: "活動報名",
                   color: "from-blue-500 to-blue-600",
                 },
-              ].map((action, i) => (
+              ].map((action) => (
                 <button
-                  key={i}
+                  key={action.label}
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
                     action.primary
                       ? `bg-gradient-to-r ${action.color} text-white shadow-lg hover:shadow-xl`
@@ -1123,10 +1123,10 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
                         }`}
                         disabled={event.registrationRequired && event.currentRegistrations >= event.registrationLimit}
                       >
-                        {event.registrationRequired
-                          ? (event.currentRegistrations >= event.registrationLimit ? '已額滿' : '立即報名')
-                          : '查看詳情'
-                        }
+                        {(() => {
+                          if (!event.registrationRequired) return '查看詳情';
+                          return event.currentRegistrations >= event.registrationLimit ? '已額滿' : '立即報名';
+                        })()}
                       </button>
                     </div>
                   </motion.div>
@@ -1217,7 +1217,7 @@ const DesktopHome = ({ temple, events, services, gallery }: any) => {
               <div className="grid grid-cols-4 gap-3">
                 {gallery.slice(0, 4).map((img: any, i: number) => (
                   <motion.div
-                    key={i}
+                    key={img.id || `gallery-desktop-${i}`}
                     whileHover={{ scale: 1.05 }}
                     onClick={() => setSelectedImageIndex(i)}
                     className={`rounded-2xl overflow-hidden cursor-pointer transition-opacity ${
@@ -1529,10 +1529,12 @@ const DesktopAbout = ({ temple, gallery }: any) => {
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
+  // Using a unique implementation for DesktopAbout
   const handleCopyAddress = (address: string) => {
-    navigator.clipboard.writeText(address);
-    setCopiedAddress(true);
-    setTimeout(() => setCopiedAddress(false), 2000);
+    navigator.clipboard.writeText(address).then(() => {
+      setCopiedAddress(true);
+      setTimeout(() => setCopiedAddress(false), 2000);
+    });
   };
 
   return (
@@ -1587,7 +1589,7 @@ const DesktopAbout = ({ temple, gallery }: any) => {
             <div className="grid grid-cols-3 gap-4">
               {gallery.map((img: any, i: number) => (
                 <motion.div
-                  key={i}
+                  key={img.id || `gallery-about-${i}`}
                   whileHover={{ scale: 1.05 }}
                   onClick={() => setSelectedImageIndex(i)}
                   className={`rounded-2xl overflow-hidden cursor-pointer transition-opacity ${
@@ -1819,10 +1821,10 @@ const EventCard = ({ event }: any) => (
           }`}
           disabled={event.registrationRequired && event.currentRegistrations >= event.registrationLimit}
         >
-          {event.registrationRequired
-            ? (event.currentRegistrations >= event.registrationLimit ? '已額滿' : '立即報名')
-            : '自由參加'
-          }
+          {(() => {
+            if (!event.registrationRequired) return '自由參加';
+            return event.currentRegistrations >= event.registrationLimit ? '已額滿' : '立即報名';
+          })()}
         </button>
         <button className="px-4 py-2.5 border border-stone-300 text-stone-600 rounded-xl font-medium hover:bg-stone-50 transition-colors">
           詳情

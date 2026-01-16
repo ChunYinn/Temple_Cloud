@@ -17,5 +17,5 @@ export function sanitizeSlug(value: string) {
     .toLowerCase()
     .replaceAll(/[^a-z0-9-]/g, '')
     .replaceAll(/-{2,}/g, '-')
-    .replaceAll(/^-+|(-+)$/g, '');
+    .replaceAll(/^-+|-+$/g, '');
 }

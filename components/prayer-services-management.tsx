@@ -1,15 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PRAYER_SERVICES, SERVICE_ICONS, DONATION_CONFIG } from '@/lib/prayer-form/services';
+import { PRAYER_SERVICES, SERVICE_ICONS } from '@/lib/prayer-form/services';
 import { ServiceCode } from '@/lib/prayer-form/types';
-import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, Save, Settings, DollarSign, Users, Check, X, Plus, Sparkles } from 'lucide-react';
+import { AlertCircle, Save, Settings, DollarSign, Users, Check, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -377,7 +376,7 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
               <CardContent className="p-6 space-y-8">
                 {/* Minimum Amount Section */}
                 <div className="space-y-3">
-                  <Label className="text-base font-medium flex items-center gap-2">
+                  <Label htmlFor="min-donation-amount" className="text-base font-medium flex items-center gap-2">
                     最低捐贈金額
                     <span className="text-xs font-normal text-stone-500 bg-stone-100 px-2 py-0.5 rounded">建議最低 100 元</span>
                   </Label>
@@ -385,6 +384,7 @@ export function PrayerServicesManagement({ templeId, onSave }: PrayerServicesMan
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500">NT$</span>
                       <Input
+                        id="min-donation-amount"
                         type="number"
                         min="1"
                         value={donationSettings.minAmount}

@@ -461,7 +461,7 @@ export function GalleryUploadManager({
                   onClick={() => setUploadMode('single')}
                   className="flex items-center gap-2 px-3 py-1.5 bg-stone-100 hover:bg-stone-200 rounded-lg text-sm transition-colors"
                 >
-                  <Crop className="w-4 h-4" />
+                  <Replace className="w-4 h-4" />
                   單張上傳（含裁切）
                 </button>
                 <button

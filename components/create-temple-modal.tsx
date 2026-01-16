@@ -425,23 +425,16 @@ export function CreateTempleModal({ onClose }: Readonly<{ onClose: () => void }>
                   </Label>
                   <div className="mt-1.5">
                     {logoPreview === null ? (
-                      <div
+                      <button
+                        type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            fileInputRef.current?.click();
-                          }
-                        }}
-                        role="button"
-                        tabIndex={0}
                         aria-label="點擊上傳寺廟標誌"
-                        className="border-2 border-dashed border-stone-300 rounded-lg p-6 text-center cursor-pointer hover:border-stone-400 transition-colors"
+                        className="w-full border-2 border-dashed border-stone-300 rounded-lg p-6 text-center cursor-pointer hover:border-stone-400 transition-colors"
                       >
                         <Upload className="mx-auto h-10 w-10 text-stone-400" />
                         <p className="mt-2 text-sm text-stone-600">點擊上傳寺廟標誌</p>
                         <p className="text-xs text-stone-500 mt-1">JPG, PNG 或 WebP (最大 5MB)</p>
-                      </div>
+                      </button>
                     ) : (
                       <div className="relative">
                         <div className="relative w-32 h-32 mx-auto">
@@ -484,23 +477,16 @@ export function CreateTempleModal({ onClose }: Readonly<{ onClose: () => void }>
                   <Label className="text-sm font-medium">封面圖片</Label>
                   <div className="mt-1.5">
                     {coverPreview === null ? (
-                      <div
+                      <button
+                        type="button"
                         onClick={() => coverInputRef.current?.click()}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            coverInputRef.current?.click();
-                          }
-                        }}
-                        role="button"
-                        tabIndex={0}
                         aria-label="點擊上傳封面圖片"
-                        className="border-2 border-dashed border-stone-300 rounded-lg p-4 text-center cursor-pointer hover:border-stone-400 transition-colors"
+                        className="w-full border-2 border-dashed border-stone-300 rounded-lg p-4 text-center cursor-pointer hover:border-stone-400 transition-colors"
                       >
                         <Upload className="mx-auto h-8 w-8 text-stone-400" />
                         <p className="mt-1 text-sm text-stone-600">點擊上傳封面圖片</p>
                         <p className="text-xs text-stone-500 mt-1">建議尺寸 1920x1080 (16:9)</p>
-                      </div>
+                      </button>
                     ) : (
                       <div className="relative">
                         <div className="relative w-full h-32">

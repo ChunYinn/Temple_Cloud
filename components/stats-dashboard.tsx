@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   TrendingUp,
-  TrendingDown,
-  Users,
   DollarSign,
   Calendar,
   Activity,
@@ -37,6 +35,63 @@ interface StatsData {
     total: number;
   };
 }
+
+// Simple chart component - moved outside parent component
+const MiniChart = ({ data, type, color }: {
+  data: any[];
+  type: 'revenue' | 'visitors';
+  color: string;
+}) => {
+  if (!data || data.length === 0) return null;
+
+  const values = data.map(d => type === 'revenue' ? d.amount : d.count);
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  const range = max - min || 1;
+
+  return (
+    <div className="h-16 flex items-end gap-0.5">
+      {data.slice(-14).map((item, index) => {
+        const value = type === 'revenue' ? item.amount : item.count;
+        const height = ((value - min) / range) * 100;
+
+        return (
+          <div
+            key={`${item.date}-${index}`}
+            className="flex-1 bg-current opacity-20 hover:opacity-40 transition-opacity rounded-t"
+            style={{
+              height: `${Math.max(height, 5)}%`,
+              backgroundColor: color
+            }}
+            title={`${item.date}: ${value.toLocaleString()}`}
+          />
+        );
+      })}
+    </div>
+  );
+};
+
+const GrowthIndicator = ({ value }: { value: number }) => {
+  if (value === 0) {
+    return (
+      <span className="flex items-center gap-1 text-xs font-medium text-stone-500">
+        <Minus className="w-3 h-3" />
+        0%
+      </span>
+    );
+  }
+
+  const isPositive = value > 0;
+  const colorClass = isPositive ? 'text-green-600' : 'text-red-600';
+  const Icon = isPositive ? ArrowUp : ArrowDown;
+
+  return (
+    <span className={`flex items-center gap-1 text-xs font-medium ${colorClass}`}>
+      <Icon className="w-3 h-3" />
+      {Math.abs(value)}%
+    </span>
+  );
+};
 
 export function StatsDashboard({ templeId }: { templeId: string }) {
   const [stats, setStats] = useState<StatsData | null>(null);
@@ -149,61 +204,6 @@ export function StatsDashboard({ templeId }: { templeId: string }) {
     return data;
   }
 
-  // Simple chart component
-  const MiniChart = ({ data, type, color }: {
-    data: any[];
-    type: 'revenue' | 'visitors';
-    color: string;
-  }) => {
-    if (!data || data.length === 0) return null;
-
-    const values = data.map(d => type === 'revenue' ? d.amount : d.count);
-    const max = Math.max(...values);
-    const min = Math.min(...values);
-    const range = max - min || 1;
-
-    return (
-      <div className="h-16 flex items-end gap-0.5">
-        {data.slice(-14).map((item, index) => {
-          const value = type === 'revenue' ? item.amount : item.count;
-          const height = ((value - min) / range) * 100;
-
-          return (
-            <div
-              key={index}
-              className="flex-1 bg-current opacity-20 hover:opacity-40 transition-opacity rounded-t"
-              style={{
-                height: `${Math.max(height, 5)}%`,
-                backgroundColor: color
-              }}
-              title={`${item.date}: ${value.toLocaleString()}`}
-            />
-          );
-        })}
-      </div>
-    );
-  };
-
-  const GrowthIndicator = ({ value }: { value: number }) => {
-    if (value === 0) {
-      return (
-        <span className="flex items-center gap-1 text-xs font-medium text-stone-500">
-          <Minus className="w-3 h-3" />
-          0%
-        </span>
-      );
-    }
-
-    return (
-      <span className={`flex items-center gap-1 text-xs font-medium ${
-        value > 0 ? 'text-green-600' : 'text-red-600'
-      }`}>
-        {value > 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
-        {Math.abs(value)}%
-      </span>
-    );
-  };
-
   if (loading) {
     return (
       <div className="space-y-6">
@@ -238,19 +238,22 @@ export function StatsDashboard({ templeId }: { templeId: string }) {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-stone-800">數據統計</h2>
         <div className="flex gap-2">
-          {(['week', 'month', 'year'] as const).map((range) => (
-            <button
-              key={range}
-              onClick={() => setTimeRange(range)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                timeRange === range
-                  ? 'bg-red-600 text-white'
-                  : 'bg-white text-stone-600 hover:bg-stone-50 border border-stone-200'
-              }`}
-            >
-              {range === 'week' ? '本週' : range === 'month' ? '本月' : '本年'}
-            </button>
-          ))}
+          {(['week', 'month', 'year'] as const).map((range) => {
+            const rangeLabels = { week: '本週', month: '本月', year: '本年' };
+            return (
+              <button
+                key={range}
+                onClick={() => setTimeRange(range)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  timeRange === range
+                    ? 'bg-red-600 text-white'
+                    : 'bg-white text-stone-600 hover:bg-stone-50 border border-stone-200'
+                }`}
+              >
+                {rangeLabels[range]}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -344,19 +347,30 @@ export function StatsDashboard({ templeId }: { templeId: string }) {
               </div>
               {/* Progress bar showing ratio */}
               <div className="relative h-1.5 bg-stone-100 rounded-full overflow-hidden mt-2">
-                <div
-                  className="absolute left-0 top-0 h-full bg-purple-500 rounded-full transition-all"
-                  style={{
-                    width: `${stats.orders.total > 0 ? (stats.orders.byType.service / stats.orders.total) * 100 : 0}%`
-                  }}
-                />
-                <div
-                  className="absolute top-0 h-full bg-blue-500 rounded-full transition-all"
-                  style={{
-                    left: `${stats.orders.total > 0 ? (stats.orders.byType.service / stats.orders.total) * 100 : 0}%`,
-                    width: `${stats.orders.total > 0 ? (stats.orders.byType.event / stats.orders.total) * 100 : 0}%`
-                  }}
-                />
+                {(() => {
+                  const servicePercentage = stats.orders.total > 0
+                    ? (stats.orders.byType.service / stats.orders.total) * 100
+                    : 0;
+                  const eventPercentage = stats.orders.total > 0
+                    ? (stats.orders.byType.event / stats.orders.total) * 100
+                    : 0;
+
+                  return (
+                    <>
+                      <div
+                        className="absolute left-0 top-0 h-full bg-purple-500 rounded-full transition-all"
+                        style={{ width: `${servicePercentage}%` }}
+                      />
+                      <div
+                        className="absolute top-0 h-full bg-blue-500 rounded-full transition-all"
+                        style={{
+                          left: `${servicePercentage}%`,
+                          width: `${eventPercentage}%`
+                        }}
+                      />
+                    </>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -401,16 +415,15 @@ export function StatsDashboard({ templeId }: { templeId: string }) {
               </div>
               {/* Visual indicator */}
               <div className="flex gap-0.5 mt-2">
-                {Array.from({ length: Math.min(10, stats.events.total) }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-1 flex-1 rounded-full ${
-                      i < Math.min(10, stats.events.total - stats.events.upcoming)
-                        ? 'bg-stone-300'
-                        : 'bg-amber-400'
-                    }`}
-                  />
-                ))}
+                {Array.from({ length: Math.min(10, stats.events.total) }).map((_, i) => {
+                  const isPastEvent = i < Math.min(10, stats.events.total - stats.events.upcoming);
+                  return (
+                    <div
+                      key={`event-indicator-${i}`}
+                      className={`h-1 flex-1 rounded-full ${isPastEvent ? 'bg-stone-300' : 'bg-amber-400'}`}
+                    />
+                  );
+                })}
               </div>
             </div>
           )}
@@ -443,7 +456,7 @@ export function StatsDashboard({ templeId }: { templeId: string }) {
 
                     return (
                       <div
-                        key={index}
+                        key={`revenue-chart-${item.date}-${index}`}
                         className="flex-1 mx-0.5 group relative"
                       >
                         <div
@@ -539,7 +552,7 @@ export function StatsDashboard({ templeId }: { templeId: string }) {
                   const y = 100 - ((item.count - min) / range) * 90 - 5;
 
                   return (
-                    <g key={index}>
+                    <g key={`visitor-point-${item.date}-${index}`}>
                       <circle
                         cx={`${x}%`}
                         cy={`${y}%`}

@@ -152,8 +152,8 @@ export function MultiImageUpload({
               <div className="flex-1">
                 <p className="font-medium text-red-800">上傳錯誤</p>
                 <ul className="mt-1 text-sm text-red-700 space-y-1">
-                  {errors.map((error, i) => (
-                    <li key={i}>{error}</li>
+                  {errors.map((error, index) => (
+                    <li key={`error-${index}-${error.substring(0, 20)}`}>{error}</li>
                   ))}
                 </ul>
               </div>

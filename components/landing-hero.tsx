@@ -72,11 +72,11 @@ export function LandingHero() {
           className="mt-12 md:mt-16 grid grid-cols-3 gap-4 sm:gap-6 md:gap-8 max-w-md mx-auto"
         >
           {[
-            { number: '500+', label: '合作寺廟' },
-            { number: '10萬+', label: '服務信眾' },
-            { number: '99.9%', label: '穩定運作' },
-          ].map((stat, i) => (
-            <div key={i} className="text-center">
+            { id: 'temples', number: '500+', label: '合作寺廟' },
+            { id: 'users', number: '10萬+', label: '服務信眾' },
+            { id: 'uptime', number: '99.9%', label: '穩定運作' },
+          ].map((stat) => (
+            <div key={stat.id} className="text-center">
               <div className="text-2xl sm:text-3xl font-bold text-amber-400">{stat.number}</div>
               <div className="text-xs sm:text-sm text-amber-200/60">{stat.label}</div>
             </div>

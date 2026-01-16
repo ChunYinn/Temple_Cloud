@@ -9,6 +9,7 @@ import { PRAYER_SERVICES } from '@/lib/prayer-form/services';
 import { ChevronLeft, ChevronRight, Check, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
+import { DonationSection } from '@/lib/prayer-form/components';
 
 // Step Components (to be implemented separately)
 // import { Step1ServiceSelection } from './steps/Step1ServiceSelection';
@@ -18,9 +19,9 @@ import { useToast } from '@/components/ui/use-toast';
 // import { Step5Review } from './steps/Step5Review';
 
 interface StepInfo {
-  number: number;
-  title: string;
-  description: string;
+  readonly number: number;
+  readonly title: string;
+  readonly description: string;
 }
 
 const STEPS: StepInfo[] = [
@@ -32,17 +33,17 @@ const STEPS: StepInfo[] = [
 ];
 
 interface PrayerFormProps {
-  templeId?: string;
-  templeSlug?: string;
+  readonly templeId?: string;
+  readonly templeSlug?: string;
 }
 
 // Service item component to reduce nesting
 interface ServiceItemProps {
-  serviceCode: ServiceCode;
-  service: typeof PRAYER_SERVICES[ServiceCode];
-  templeService?: { isEnabled: boolean; customPrice?: number };
-  isSelected: boolean;
-  onToggle: () => void;
+  readonly serviceCode: ServiceCode;
+  readonly service: typeof PRAYER_SERVICES[ServiceCode];
+  readonly templeService?: { readonly isEnabled: boolean; readonly customPrice?: number };
+  readonly isSelected: boolean;
+  readonly onToggle: () => void;
 }
 
 const ServiceItem = ({ serviceCode, service, templeService, isSelected, onToggle }: ServiceItemProps) => {
@@ -52,22 +53,15 @@ const ServiceItem = ({ serviceCode, service, templeService, isSelected, onToggle
   if (!isEnabled) return null;
 
   return (
-    <div
+    <button
+      type="button"
       className={cn(
-        "p-4 border rounded-lg cursor-pointer transition-all",
+        "w-full p-4 border rounded-lg cursor-pointer transition-all text-left",
         isSelected
           ? "border-red-500 bg-red-50"
           : "border-stone-200 hover:border-stone-300"
       )}
       onClick={onToggle}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onToggle();
-        }
-      }}
-      role="button"
-      tabIndex={0}
       aria-label={`選擇 ${service.displayName}`}
     >
       <div className="flex items-start justify-between">
@@ -76,7 +70,7 @@ const ServiceItem = ({ serviceCode, service, templeService, isSelected, onToggle
             <input
               type="checkbox"
               checked={isSelected}
-              onChange={() => {}}
+              onChange={onToggle}
               className="w-4 h-4 text-red-600 rounded"
               onClick={(e) => e.stopPropagation()}
             />
@@ -87,7 +81,7 @@ const ServiceItem = ({ serviceCode, service, templeService, isSelected, onToggle
           <p className="mt-1 ml-6 text-xs text-stone-500">贈品：{service.giftLabel}</p>
         </div>
       </div>
-    </div>
+    </button>
   );
 };
 
@@ -101,6 +95,16 @@ export function PrayerForm({ templeId: propTempleId, templeSlug: propTempleSlug 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [templeSettings, setTempleSettings] = useState<any>(null);
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
+
+  // Extract handler functions to reduce nesting
+  const handleServiceToggle = (serviceCode: ServiceCode) => {
+    setFormState(prev => ({
+      ...prev,
+      selectedServices: prev.selectedServices.includes(serviceCode)
+        ? prev.selectedServices.filter(s => s !== serviceCode)
+        : [...prev.selectedServices, serviceCode]
+    }));
+  };
 
   // Parse URL parameters
   const templeId = propTempleId || searchParams.get('temple') || '';
@@ -194,19 +198,23 @@ export function PrayerForm({ templeId: propTempleId, templeSlug: propTempleSlug 
     let result;
 
     switch (currentStep) {
-      case 1:
+      case 1: {
         result = validateStep1(formState.selectedServices);
         break;
-      case 2:
+      }
+      case 2: {
         result = validateStep2(formState.applicant);
         break;
-      case 3:
+      }
+      case 3: {
         result = validateStep3(formState.shipping);
         break;
-      case 4:
+      }
+      case 4: {
         result = validateStep4(formState.serviceSelections);
         break;
-      case 5:
+      }
+      case 5: {
         // Also validate donation if present
         const donationResult = validateDonation(formState.donation);
         if (!donationResult.success) {
@@ -214,6 +222,7 @@ export function PrayerForm({ templeId: propTempleId, templeSlug: propTempleSlug 
           return false;
         }
         return true;
+      }
       default:
         return true;
     }
@@ -303,22 +312,29 @@ export function PrayerForm({ templeId: propTempleId, templeSlug: propTempleSlug 
           {STEPS.map((step, index) => (
             <div key={step.number} className="flex-1 flex items-center">
               <div className="relative flex flex-col items-center flex-1">
-                <div
-                  className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center font-medium transition-all",
-                    currentStep > step.number
-                      ? "bg-green-600 text-white"
-                      : currentStep === step.number
-                      ? "bg-red-600 text-white shadow-lg"
-                      : "bg-stone-200 text-stone-600"
-                  )}
-                >
-                  {currentStep > step.number ? (
-                    <Check className="w-5 h-5" />
-                  ) : (
-                    step.number
-                  )}
-                </div>
+                {(() => {
+                  let stepClass = "bg-stone-200 text-stone-600";
+                  if (currentStep > step.number) {
+                    stepClass = "bg-green-600 text-white";
+                  } else if (currentStep === step.number) {
+                    stepClass = "bg-red-600 text-white shadow-lg";
+                  }
+
+                  return (
+                    <div
+                      className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center font-medium transition-all",
+                        stepClass
+                      )}
+                    >
+                      {currentStep > step.number ? (
+                        <Check className="w-5 h-5" />
+                      ) : (
+                        step.number
+                      )}
+                    </div>
+                  );
+                })()}
                 <div className="mt-2 text-center hidden sm:block">
                   <div className={cn(
                     "text-sm font-medium",
@@ -393,73 +409,18 @@ export function PrayerForm({ templeId: propTempleId, templeSlug: propTempleSlug 
                   service={PRAYER_SERVICES[serviceCode]}
                   templeService={templeSettings?.services?.[serviceCode]}
                   isSelected={formState.selectedServices.includes(serviceCode)}
-                  onToggle={() => {
-                    setFormState(prev => ({
-                      ...prev,
-                      selectedServices: prev.selectedServices.includes(serviceCode)
-                        ? prev.selectedServices.filter(s => s !== serviceCode)
-                        : [...prev.selectedServices, serviceCode]
-                    }));
-                  }}
+                  onToggle={() => handleServiceToggle(serviceCode)}
                 />
               ))}
 
               {/* Donation option */}
-              {templeSettings?.donation?.isEnabled && (
-                <div className="mt-4 p-4 border border-amber-300 bg-amber-50 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <input
-                      type="checkbox"
-                      checked={!!formState.donation}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setFormState(prev => ({
-                            ...prev,
-                            donation: {
-                              amount: templeSettings.donation.minAmount || 100,
-                              isAnonymous: false,
-                              category: 'general'
-                            }
-                          }));
-                        } else {
-                          setFormState(prev => ({
-                            ...prev,
-                            donation: undefined
-                          }));
-                        }
-                      }}
-                      className="w-4 h-4 text-amber-600 rounded mt-0.5"
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium text-stone-800">線上功德金</div>
-                      <p className="text-sm text-stone-600 mt-1">
-                        隨喜捐贈，護持道場（建議最低 NT$ {templeSettings?.donation?.minAmount || 100}）
-                      </p>
-                      {formState.donation && (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {templeSettings.donation.suggestedAmounts.map((amount: number) => (
-                            <button
-                              key={amount}
-                              onClick={() => setFormState(prev => ({
-                                ...prev,
-                                donation: prev.donation ? { ...prev.donation, amount } : undefined
-                              }))}
-                              className={cn(
-                                "px-3 py-1 text-sm rounded-full border transition-all",
-                                formState.donation?.amount === amount
-                                  ? "bg-amber-500 text-white border-amber-500"
-                                  : "bg-white border-stone-300 hover:border-amber-400"
-                              )}
-                            >
-                              NT$ {amount}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
+              <DonationSection
+                templeSettings={templeSettings}
+                donation={formState.donation}
+                onDonationChange={(donation) => {
+                  setFormState(prev => ({ ...prev, donation }));
+                }}
+              />
             </div>
             )}
 

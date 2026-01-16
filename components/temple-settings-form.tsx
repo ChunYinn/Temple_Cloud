@@ -290,7 +290,7 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
       const result = await uploadGalleryImage(replacement.file, templeId);
       if (result.success) {
         const index = updatedUrls.findIndex(url => url === replacement.oldUrl);
-        if (index >= 0) {
+        if (index !== -1) {
           updatedUrls[index] = result.photoUrl;
         }
       }
@@ -445,10 +445,11 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
               {/* Temple Name & Slug */}
               <div className="grid md:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">
+                  <label htmlFor="temple-name" className="block text-sm font-medium text-stone-700 mb-2">
                     寺廟名稱 <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="temple-name"
                     type="text"
                     value={formData.name || ''}
                     onChange={(e) => handleInputChange('name', e.target.value)}
@@ -458,11 +459,12 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">
+                  <label htmlFor="temple-slug" className="block text-sm font-medium text-stone-700 mb-2">
                     網址名稱 <span className="text-red-500">*</span>
                   </label>
                   <div className="flex">
                     <input
+                      id="temple-slug"
                       type="text"
                       value={formData.slug || ''}
                       onChange={(e) => handleInputChange('slug', e.target.value.toLowerCase())}
@@ -589,10 +591,11 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
 
               {/* Intro */}
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">
+                <label htmlFor="temple-intro" className="block text-sm font-medium text-stone-700 mb-2">
                   寺廟簡介
                 </label>
                 <textarea
+                  id="temple-intro"
                   value={formData.intro || ''}
                   onChange={(e) => handleInputChange('intro', e.target.value)}
                   rows={3}
@@ -603,10 +606,11 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
 
               {/* Full Description */}
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">
+                <label htmlFor="temple-description" className="block text-sm font-medium text-stone-700 mb-2">
                   詳細介紹
                 </label>
                 <textarea
+                  id="temple-description"
                   value={formData.full_description || ''}
                   onChange={(e) => handleInputChange('full_description', e.target.value)}
                   rows={6}
@@ -637,8 +641,7 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
               {/* Address */}
               <div>
                 <label className="block text-sm font-medium text-stone-700 mb-2">
-                  <span className="mr-1">📍</span>
-                  {' '}地址
+                  <span className="mr-1">📍</span> 地址
                 </label>
                 <input
                   type="text"
@@ -653,8 +656,7 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
               <div className="grid md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-sm font-medium text-stone-700 mb-2">
-                    <span className="mr-1">📞</span>
-                    {' '}電話
+                    <span className="mr-1">📞</span> 電話
                   </label>
                   <input
                     type="tel"
@@ -667,8 +669,7 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
 
                 <div>
                   <label className="block text-sm font-medium text-stone-700 mb-2">
-                    <span className="mr-1">📧</span>
-                    {' '}電子信箱
+                    <span className="mr-1">📧</span> 電子信箱
                   </label>
                   <input
                     type="email"
@@ -683,8 +684,7 @@ export function TempleSettingsForm({ temple, onSave }: TempleSettingsFormProps) 
               {/* Hours */}
               <div>
                 <label className="block text-sm font-medium text-stone-700 mb-2">
-                  <span className="mr-1">⏰</span>
-                  {' '}開放時間
+                  <span className="mr-1">⏰</span> 開放時間
                 </label>
                 <TimeRangePicker
                   value={formData.hours || '每日 06:00 - 21:00'}

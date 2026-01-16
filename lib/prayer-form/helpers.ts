@@ -239,11 +239,12 @@ const buildShippingSection = (shipping: PrayerFormState['shipping']): string[] =
   } else {
     lines.push(`收件人：${shipping.recipientName}`);
     lines.push(`聯絡電話：${shipping.recipientMobile}`);
-    const address = shipping.addressType && shipping.domesticAddress
-      ? formatDomesticAddress(shipping.domesticAddress)
-      : shipping.addressType && shipping.overseasAddress
-      ? formatOverseasAddress(shipping.overseasAddress)
-      : '';
+    let address = '';
+    if (shipping.addressType && shipping.domesticAddress) {
+      address = formatDomesticAddress(shipping.domesticAddress);
+    } else if (shipping.addressType && shipping.overseasAddress) {
+      address = formatOverseasAddress(shipping.overseasAddress);
+    }
     if (address) lines.push(`地址：${address}`);
   }
   lines.push('');

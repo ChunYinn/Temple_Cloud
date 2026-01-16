@@ -4,36 +4,42 @@ import { motion } from 'framer-motion';
 
 const features = [
   {
+    id: 'subdomain',
     icon: '🏮',
     title: '專屬子網域',
     desc: '您的寺廟名.miao.link',
     color: 'from-red-500 to-red-600'
   },
   {
+    id: 'donation',
     icon: '💰',
     title: '線上香油錢',
     desc: '安全便利的線上捐款',
     color: 'from-amber-500 to-amber-600'
   },
   {
+    id: 'lamp',
     icon: '📿',
     title: '點燈服務',
     desc: '光明燈、太歲燈線上登記',
     color: 'from-emerald-500 to-emerald-600'
   },
   {
+    id: 'events',
     icon: '📅',
     title: '活動報名',
     desc: '法會、慶典線上報名',
     color: 'from-blue-500 to-blue-600'
   },
   {
+    id: 'qrcode',
     icon: '📱',
     title: 'QR Code',
     desc: '一掃即開，方便捐獻',
     color: 'from-purple-500 to-purple-600'
   },
   {
+    id: 'reports',
     icon: '📊',
     title: '數據報表',
     desc: '清楚的收支報表',
@@ -61,13 +67,12 @@ export function LandingFeatures() {
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-          {features.map((feature, i) => (
+          {features.map((feature) => (
             <motion.div
-              key={i}
+              key={feature.id}
               initial={{ y: 20, opacity: 0 }}
               whileInView={{ y: 0, opacity: 1 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.1, duration: 0.5 }}
               className="group bg-white rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-lg shadow-stone-200/50 hover:shadow-xl transition-all hover:-translate-y-1"
             >
               <div

@@ -75,7 +75,8 @@ export function validateMultipleImageFiles(
  */
 export function getFileExtension(filename: string): string {
   const parts = filename.split('.');
-  return parts.at(-1)?.toLowerCase() || '';
+  const lastPart = parts.at(-1);
+  return lastPart ? lastPart.toLowerCase() : '';
 }
 
 /**

@@ -554,17 +554,17 @@ export function OrdersManagement({ templeId }: Readonly<{ templeId: string }>) {
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
-                    {[...new Array(totalPages)].map((_, i) => (
+                    {[...Array.from({ length: totalPages }, (_, i) => i + 1)].map((pageNum) => (
                       <button
-                        key={i}
-                        onClick={() => setCurrentPage(i + 1)}
+                        key={`page-${pageNum}`}
+                        onClick={() => setCurrentPage(pageNum)}
                         className={`px-3 py-1 rounded-lg text-sm font-medium ${
-                          currentPage === i + 1
+                          currentPage === pageNum
                             ? 'bg-red-600 text-white'
                             : 'hover:bg-stone-100 text-stone-700'
                         }`}
                       >
-                        {i + 1}
+                        {pageNum}
                       </button>
                     ))}
                     <button

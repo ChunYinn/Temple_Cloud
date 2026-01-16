@@ -204,17 +204,10 @@ function TempleCard({
       </div>
 
       {/* Content */}
-      <div
-        className="relative p-5 lg:p-6 cursor-pointer"
+      <button
+        type="button"
+        className="relative p-5 lg:p-6 cursor-pointer w-full text-left"
         onClick={() => onSelect(temple)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onSelect(temple);
-          }
-        }}
-        role="button"
-        tabIndex={0}
         aria-label={`選擇管理 ${temple.name}`}
       >
         {/* Header */}
@@ -296,7 +289,7 @@ function TempleCard({
             {protocol}://{temple.slug}.{rootDomain}
           </p>
         </div>
-      </div>
+      </button>
 
       {/* Hover Indicator */}
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 to-red-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />

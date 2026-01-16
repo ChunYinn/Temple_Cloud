@@ -102,11 +102,11 @@ export function GalleryUpload({ templeId, initialPhotos = [], onUpdate }: Galler
       {/* Photo Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {/* Existing Photos */}
-        {photos.map((photoUrl, index) => (
-          <div key={index} className="relative group aspect-[4/3]">
+        {photos.map((photoUrl) => (
+          <div key={photoUrl} className="relative group aspect-[4/3]">
             <Image
               src={photoUrl}
-              alt={`相簿照片 ${index + 1}`}
+              alt={`相簿照片`}
               fill
               className="object-cover rounded-xl"
             />

@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SignedIn, SignedOut, UserButton, SignInButton } from '@clerk/nextjs';
-import { cn } from '@/lib/utils';
 
 export function Navigation() {
   const pathname = usePathname();

@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, X, Loader2, AlertCircle, Crop, Replace } from 'lucide-react';
+import { Upload, X, Loader2, AlertCircle, Replace } from 'lucide-react';
 import Image from 'next/image';
 import { ImageCropModalStandalone as ImageCropModal, ASPECT_RATIOS } from './image-crop-modal-standalone';
 import { UPLOAD_CONFIG, validateImage } from '@/lib/upload-validation';
@@ -315,8 +315,8 @@ export function MultiImageUploadEnhanced({
               <div className="flex-1">
                 <p className="font-medium text-red-800">上傳錯誤</p>
                 <ul className="mt-1 text-sm text-red-700 space-y-1">
-                  {errors.map((error, i) => (
-                    <li key={i}>{error}</li>
+                  {errors.map((error, index) => (
+                    <li key={`error-${index}-${error.substring(0, 20)}`}>{error}</li>
                   ))}
                 </ul>
               </div>
@@ -336,7 +336,7 @@ export function MultiImageUploadEnhanced({
         {/* Existing Images */}
         {images.map((imageUrl, index) => (
           <motion.div
-            key={`${imageUrl}-${index}`}
+            key={imageUrl}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
@@ -344,7 +344,7 @@ export function MultiImageUploadEnhanced({
           >
             <Image
               src={imageUrl}
-              alt={`圖片 ${index + 1}`}
+              alt="上傳的圖片"
               fill
               className="object-cover"
               sizes="(max-width: 768px) 50vw, 33vw"
